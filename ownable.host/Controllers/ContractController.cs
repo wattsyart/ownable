@@ -6,12 +6,17 @@ namespace ownable.host.Controllers
     [Route("contracts")]
     public class ContractController : Controller
     {
+        private readonly Store _store;
+
+        public ContractController(Store store)
+        {
+            _store = store;
+        }
+
         [HttpGet]
         public IActionResult GetContracts(CancellationToken cancellationToken)
         {
-            var store = new Store();
-            var contracts = store.Get<Contract>(cancellationToken);
-            return Ok(contracts);
+            return Ok(_store.Get<Contract>(cancellationToken));
         }
     }
 }
