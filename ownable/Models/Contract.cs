@@ -7,5 +7,11 @@
 
         [Indexed]
         public string? Type { get; set; }
+
+        [Indexed]
+        public string? Name { get; set; }
+
+        [Indexed]
+        public string? Symbol { get; set; }
     }
 }

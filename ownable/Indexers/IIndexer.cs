@@ -4,5 +4,5 @@ namespace ownable.Indexers;
 
 public interface IIndexer
 {
-    Task IndexAddressAsync(Web3 web3, string address);
+    Task IndexAddressAsync(IWeb3 web3, string address);
 }

@@ -58,34 +58,39 @@ namespace ownable
                 if (!_setField.TryGetValue(type, out var fieldMap))
                     _setField.Add(type, fieldMap = new Dictionary<string, Action<object, object>>());
 
-                fieldMap[indexedProperty.Name] = (instance, value) => { indexedProperty.SetValue(instance, value); };
+                var field = indexedProperty.Name;
+
+                fieldMap[field] = (instance, value) => { indexedProperty.SetValue(instance, value); };
 
                 if (!_typeToIndexPrefix.TryGetValue(type, out var indexKeyMap))
                     _typeToIndexPrefix.Add(type, indexKeyMap = new Dictionary<string, Func<object, byte[]>>());
 
-                indexKeyMap[indexedProperty.Name] = instance => Encoding.UTF8.GetBytes($"{RegisterIndexPrefix()}{keyProperty.GetValue(instance)}");
+                indexKeyMap[field] = instance => Encoding.UTF8.GetBytes($"{RegisterIndexPrefix(field)}{keyProperty.GetValue(instance)}");
                 
                 if (!_typeToIndexed.TryGetValue(type, out var indexValueMap))
                     _typeToIndexed.Add(type, indexValueMap = new Dictionary<string, Func<object, (byte[], byte[])>>());
                 
-                indexValueMap[indexedProperty.Name] = instance =>
+                indexValueMap[field] = instance =>
                 {
-                    var key = indexKeyMap[indexedProperty.Name](instance);
+                    var key = indexKeyMap[field](instance);
                     var value = indexedProperty.GetValue(instance);
 
-                    return (key, value: Encoding.UTF8.GetBytes(value?.ToString() ?? throw new InvalidOperationException()));
+                    return (key,
+                        value: value == null
+                            ? Array.Empty<byte>()
+                            : Encoding.UTF8.GetBytes(value.ToString() ?? throw new InvalidOperationException()));
                 };
             }
         }
 
-        private static string RegisterIndexPrefix()
+        private static string RegisterIndexPrefix(string field)
         {
-            return "C:T";
+            return $"B:I:{field}";
         }
 
         private static string RegisterKeyPrefix()
         {
-            return "C:K:";
+            return "A:";
         }
 
         public byte[] GetKey<T>(T instance)

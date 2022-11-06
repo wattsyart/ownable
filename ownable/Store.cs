@@ -27,7 +27,7 @@ namespace ownable
             using var db = tx.OpenDatabase(configuration: new DatabaseConfiguration { Flags = DatabaseOpenFlags.Create });
 
             tx.Put(db, _types.GetKey(instance), _types.GetKeyValue(instance), PutOptions.NoOverwrite);
-            
+
             foreach (var indexed in _types.GetIndexed(instance))
             {
                 var (key, value) = indexed(instance);
