@@ -12,6 +12,7 @@ namespace ownable
         static CommandLine()
         {
             AddCommand("stat", StatOptions);
+            AddCommand("get", BuiltIn.GetOwnedTokens);
         }
 
         public static void AddCommand(string commandName, Func<IConfiguration, Queue<string>, IConfiguration> commandFunc)

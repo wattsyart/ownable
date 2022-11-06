@@ -2,8 +2,9 @@ using ownable;
 using ownable.host.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-IConfiguration configuration = builder.Configuration;
+builder.Services.Configure<Web3Options>(builder.Configuration.GetSection("Web3"));
 
+IConfiguration configuration = builder.Configuration;
 CommandLine.AddCommand("serve", (_, _) => Serve());
 CommandLine.ProcessArguments(ref configuration, args);
 
