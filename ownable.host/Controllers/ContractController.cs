@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ownable.Models;
 
 namespace ownable.host.Controllers
 {
@@ -9,7 +10,7 @@ namespace ownable.host.Controllers
         public IActionResult GetContracts(CancellationToken cancellationToken)
         {
             var store = new Store();
-            var contracts = store.GetContracts(cancellationToken);
+            var contracts = store.Get<Contract>(cancellationToken);
             return Ok(contracts);
         }
     }

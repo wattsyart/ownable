@@ -7,36 +7,47 @@ namespace ownable
     public class Store
     {
         private readonly LightningEnvironment _env;
+        private readonly TypeRegistry _types;
 
         public Store()
         {
-            var configuration = new EnvironmentConfiguration { MapSize = 10_485_760 };
-            _env = new LightningEnvironment("store", configuration);
+            _env = new LightningEnvironment("store", new EnvironmentConfiguration { MapSize = 10_485_760 });
             _env.MaxDatabases = 1;
             _env.Open();
+
+            _types = new TypeRegistry();
+            _types.Register<Contract>();
         }
 
-        public void SetTokenType(string contractAddress, string tokenType)
+        public void Index<T>(T instance)
         {
+            if (instance == null) throw new ArgumentNullException(nameof(instance));
+
             using var tx = _env.BeginTransaction();
             using var db = tx.OpenDatabase(configuration: new DatabaseConfiguration { Flags = DatabaseOpenFlags.Create });
 
-            tx.Put(db, Encoding.UTF8.GetBytes($"C:K:{contractAddress}"), Encoding.UTF8.GetBytes(contractAddress), PutOptions.NoOverwrite);
-            tx.Put(db, Encoding.UTF8.GetBytes($"C:T:{contractAddress}"), Encoding.UTF8.GetBytes(tokenType), PutOptions.NoOverwrite);
+            tx.Put(db, _types.GetKey(instance), _types.GetKeyValue(instance), PutOptions.NoOverwrite);
+            
+            foreach (var indexed in _types.GetIndexed(instance))
+            {
+                var (key, value) = indexed(instance);
+                tx.Put(db, key, value);
+            }
+
             tx.Commit();
         }
 
-        public IEnumerable<Contract> GetContracts(CancellationToken cancellationToken)
+        public IEnumerable<T> Get<T>(CancellationToken cancellationToken) where T : new()
         {
             using var tx = _env.BeginTransaction(TransactionBeginFlags.ReadOnly);
             using var db = tx.OpenDatabase(configuration: new DatabaseConfiguration { Flags = DatabaseOpenFlags.None });
             using var cursor = tx.CreateCursor(db);
 
-            var entries = new Dictionary<string, Contract>();
+            var entries = new Dictionary<string, T>();
 
             {
-                var prefix = Encoding.UTF8.GetBytes("C:K:");
-                var sr = cursor.SetRange(prefix);
+                var keyPrefix = _types.GetKeyPrefix<Contract>();
+                var sr = cursor.SetRange(keyPrefix);
                 if (sr != MDBResultCode.Success)
                     return entries.Values;
 
@@ -44,18 +55,18 @@ namespace ownable
 
                 while (r == MDBResultCode.Success && !cancellationToken.IsCancellationRequested)
                 {
-                    var key = k.AsSpan();
-
-                    if (!key.StartsWith(prefix))
+                    if (!k.AsSpan().StartsWith(keyPrefix))
                         break;
 
                     var index = v.AsSpan();
                     if (index.Length == 0)
                         break;
 
-                    var entry = new Contract();
-                    entry.Address = Encoding.UTF8.GetString(index);
-                    entries.Add(entry.Address, entry);
+                    var key = Encoding.UTF8.GetString(index);
+                    var value = new T();
+
+                    _types.SetKey(value, key);
+                    entries.Add(key, value);
 
                     r = cursor.Next();
                     if (r == MDBResultCode.Success)
@@ -65,27 +76,30 @@ namespace ownable
 
             foreach(var entry in entries)
             {
-                var prefix = Encoding.UTF8.GetBytes($"C:T:{entry.Key}");
-                var sr = cursor.SetRange(prefix);
-                if (sr != MDBResultCode.Success)
-                    return entries.Values;
-
-                var (r, k, v) = cursor.GetCurrent();
-
-                while (r == MDBResultCode.Success && !cancellationToken.IsCancellationRequested)
+                foreach (var field in _types.GetIndexFields<T>())
                 {
-                    var key = k.AsSpan();
-                    if (!key.StartsWith(prefix))
-                        break;
+                    var indexKey = _types.GetIndexKey(entry.Value, field);
+                    var sr = cursor.SetRange(indexKey);
+                    if (sr != MDBResultCode.Success)
+                        return entries.Values;
 
-                    var index = v.AsSpan();
-                    if (index.Length == 0)
-                        break;
+                    var (r, k, v) = cursor.GetCurrent();
 
-                    entry.Value.Type = Encoding.UTF8.GetString(index);
-                    r = cursor.Next();
-                    if (r == MDBResultCode.Success)
-                        (r, k, v) = cursor.GetCurrent();
+                    while (r == MDBResultCode.Success && !cancellationToken.IsCancellationRequested)
+                    {
+                        if (!k.AsSpan().StartsWith(indexKey))
+                            break;
+
+                        var index = v.AsSpan();
+                        if (index.Length == 0)
+                            break;
+
+                        _types.SetField(entry.Value, field, Encoding.UTF8.GetString(index));
+
+                        r = cursor.Next();
+                        if (r == MDBResultCode.Success)
+                            (r, k, v) = cursor.GetCurrent();
+                    }
                 }
             }
 

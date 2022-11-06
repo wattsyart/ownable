@@ -2,8 +2,8 @@
 using Nethereum.JsonRpc.Client;
 using Nethereum.Web3;
 using ownable.Contracts;
-using Nethereum.Hex.HexTypes;
 using Nethereum.Hex.HexConvertors.Extensions;
+using ownable.Models;
 
 namespace ownable
 {
@@ -34,13 +34,20 @@ namespace ownable
                 foreach (var change in changes)
                 {
                     var contractAddress = change.Log.Address;
+
                     var supportsInterface = web3.Eth.GetContractQueryHandler<ERC721.SupportsInterfaceFunction>()
                         .QueryAsync<bool>(contractAddress, new ERC721.SupportsInterfaceFunction {InterfaceId = Erc721InterfaceId})
                         .ConfigureAwait(false).GetAwaiter()
                         .GetResult();
 
                     if (supportsInterface)
-                        store.SetTokenType(contractAddress, "ERC721");
+                    {
+                        var contract = new Contract();
+                        contract.Address = contractAddress;
+                        contract.Type = "ERC721";
+
+                        store.Index(contract);
+                    }
                 }
             }
 
