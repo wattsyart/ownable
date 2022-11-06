@@ -2,11 +2,12 @@ using ownable;
 using ownable.host.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.Configure<Web3Options>(builder.Configuration.GetSection("Web3"));
+builder.Services.AddCoreServices(builder.Configuration);
 
 IConfiguration configuration = builder.Configuration;
-CommandLine.AddCommand("serve", (_, _) => Serve());
-CommandLine.ProcessArguments(ref configuration, args);
+
+CommandLine.AddCommand("serve", (_, _, _) => Serve());
+CommandLine.ProcessArguments(ref configuration, builder.Services, args);
 
 IConfiguration Serve()
 {

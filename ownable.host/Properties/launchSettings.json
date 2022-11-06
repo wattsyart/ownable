@@ -1,8 +1,9 @@
 {
+  "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
     "ownable.host": {
       "commandName": "Project",
-      "commandLineArgs": "--serve",
+      "commandLineArgs": "--stat version --index 0x7572883e33f4d8e4b50de30aea64fb21db6c90fc --serve",
       "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {
@@ -11,6 +12,5 @@
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7089"
     }
-  },
-  "$schema": "https://json.schemastore.org/launchsettings.json"
+  }
 }

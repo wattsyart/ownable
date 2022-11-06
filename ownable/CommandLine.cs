@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
 
 namespace ownable
 {
@@ -7,22 +9,23 @@ namespace ownable
     {
         public const string PrefixVerbose = "--";
 
-        private static readonly Dictionary<string, Func<IConfiguration, Queue<string>, IConfiguration>> Commands = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<string, Func<IConfiguration, IServiceProvider, Queue<string>, IConfiguration>> Commands = new(StringComparer.OrdinalIgnoreCase);
 
         static CommandLine()
         {
             AddCommand("stat", StatOptions);
-            AddCommand("get", BuiltIn.GetOwnedTokens);
+            AddCommand("index", BuiltIn.IndexAddress);
         }
 
-        public static void AddCommand(string commandName, Func<IConfiguration, Queue<string>, IConfiguration> commandFunc)
+        public static void AddCommand(string commandName, Func<IConfiguration, IServiceProvider, Queue<string>, IConfiguration> commandFunc)
         {
             Commands[commandName] = commandFunc;
         }
 
-        public static void ProcessArguments(ref IConfiguration configuration, string[] args)
+        public static void ProcessArguments(ref IConfiguration configuration, IServiceCollection services, string[] args)
         {
             var arguments = new Queue<string>(args);
+            var serviceProvider = services.BuildServiceProvider();
 
             while (arguments.Count > 0)
             {
@@ -32,12 +35,12 @@ namespace ownable
 
                 if (Commands.TryGetValue(commandName, out var commandFunc))
                 {
-                    configuration = commandFunc(configuration, arguments);
+                    configuration = commandFunc(configuration, serviceProvider, arguments);
                 }
             }
         }
 
-        private static IConfiguration StatOptions(IConfiguration configuration, Queue<string> arguments)
+        private static IConfiguration StatOptions(IConfiguration configuration, IServiceProvider serviceProvider, Queue<string> arguments)
         {
             if (arguments.EndOfSubArguments())
             {
