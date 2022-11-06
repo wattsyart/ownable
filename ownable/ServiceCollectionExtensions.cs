@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using ownable.Indexers;
 using ownable.Services;
 
 namespace ownable
@@ -10,6 +12,8 @@ namespace ownable
         {
             services.AddSingleton<Store>();
             services.AddScoped<Web3Service>();
+
+            services.TryAddEnumerable(ServiceDescriptor.Scoped<IIndexer, ERC721Indexer>());
 
             services.Configure<Web3Options>(configuration.GetSection("Web3"));
             return services;
