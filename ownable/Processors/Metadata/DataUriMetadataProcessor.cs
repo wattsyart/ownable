@@ -3,7 +3,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using ownable.Models;
 
-namespace ownable.Processors;
+namespace ownable.Processors.Metadata;
 
 public class DataUriMetadataProcessor : IMetadataProcessor
 {
@@ -34,7 +34,7 @@ public class DataUriMetadataProcessor : IMetadataProcessor
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to process embedded {ContentType} metadata", format.ContentType);
-            return Task.FromResult((JsonTokenMetadata?) null);
+            return Task.FromResult((JsonTokenMetadata?)null);
         }
     }
 }

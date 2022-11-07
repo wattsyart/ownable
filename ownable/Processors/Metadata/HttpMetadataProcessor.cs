@@ -3,7 +3,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using ownable.Models;
 
-namespace ownable.Processors;
+namespace ownable.Processors.Metadata;
 
 public class HttpMetadataProcessor : IMetadataProcessor
 {

@@ -3,7 +3,7 @@ using Ipfs.Http;
 using Microsoft.Extensions.Logging;
 using ownable.Models;
 
-namespace ownable.Processors;
+namespace ownable.Processors.Metadata;
 
 public class IpfsMetadataProcessor : IMetadataProcessor
 {
@@ -13,11 +13,11 @@ public class IpfsMetadataProcessor : IMetadataProcessor
     {
         _logger = logger;
     }
-    
+
     public bool CanProcess(string tokenUri)
     {
         return Uri.TryCreate(tokenUri, UriKind.Absolute, out var uri) &&
-               (uri.Scheme.Equals("ipfs", StringComparison.OrdinalIgnoreCase));
+               uri.Scheme.Equals("ipfs", StringComparison.OrdinalIgnoreCase);
     }
 
     public async Task<JsonTokenMetadata?> ProcessAsync(string tokenUri, CancellationToken cancellationToken)

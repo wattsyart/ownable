@@ -4,8 +4,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using ownable.Handlers;
 using ownable.Indexers;
 using ownable.Models;
-using ownable.Processors;
 using ownable.Processors.Images;
+using ownable.Processors.Metadata;
 using ownable.Services;
 
 namespace ownable
