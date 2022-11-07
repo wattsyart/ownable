@@ -1,34 +1,28 @@
 ﻿using ownable.Models;
 using System.Reflection;
-using System.Text;
+using WyHash;
 
 namespace ownable.Data
 {
     public static class KeyBuilder
     {
         private static readonly Dictionary<Type, byte[]> IdPrefixes = new();
+        private static readonly Dictionary<(Type, string), byte[]> KeyPrefixes = new();
 
         public static byte[] IdPrefix(Type type)
         {
             if (!IdPrefixes.TryGetValue(type, out var prefix))
-                IdPrefixes.Add(type, prefix = Encoding.UTF8.GetBytes(IdPrefixString(type)));
+                IdPrefixes.Add(type, prefix = IdTag(type).ToArray());
             return prefix;
         }
-
-        private static string IdPrefixString(MemberInfo type) => $"{type.Name.ToUpperInvariant()}:";
-
-        private static readonly Dictionary<(Type, string), byte[]> KeyPrefixes = new();
 
         public static byte[] KeyPrefix(Type type, string key)
         {
             key = key.ToUpperInvariant();
             if (!KeyPrefixes.TryGetValue((type, key), out var prefix))
-                KeyPrefixes.Add((type, key), prefix = IdPrefix(type)
-                    .Concat(Encoding.UTF8.GetBytes(KeyPrefixString(key))));
+                KeyPrefixes.Add((type, key), prefix = IdPrefix(type).Concat(KeyTag(key)));
             return prefix;
         }
-
-        private static string KeyPrefixString(string key) => $"{key.ToUpperInvariant()}:";
        
         public static bool IndexKey(PropertyInfo property, object target, byte[] id, out byte[]? indexKey)
         {
@@ -56,18 +50,26 @@ namespace ownable.Data
         public static byte[] LookupKey(Type type, string key, string? value)
         {
             var lookupKey = KeyPrefix(type, key)
-                .Concat(PrepareValue(value))
+                .Concat(ValueTag(value))
                 .Concat(':');
 
             return lookupKey;
         }
 
-        private static ReadOnlySpan<byte> PrepareValue(ReadOnlySpan<char> value)
+        private static ReadOnlySpan<byte> ValueTag(ReadOnlySpan<char> value) => Hash(value);
+
+        private static ReadOnlySpan<byte> IdTag(MemberInfo type) => Hash(type.Name.AsSpan());
+
+        private static ReadOnlySpan<byte> KeyTag(string key) => Hash(key.AsSpan());
+
+        private static ReadOnlySpan<byte> Hash(ReadOnlySpan<char> value)
         {
             var buffer = new char[value.Length];
             value.ToUpperInvariant(buffer);
-            var result = Encoding.UTF8.GetBytes(new string(buffer));
-            return result;
+            var hash = new byte[sizeof(ulong)];
+            if (!BitConverter.TryWriteBytes(hash, WyHash64.ComputeHash64(buffer)))
+                throw new InvalidOperationException("Failed to hash string value");
+            return hash;
         }
     }
 }

@@ -7,9 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ownable", "ownable\ownable.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ownable.host", "ownable.host\ownable.host.csproj", "{38EF09F9-CAF4-428F-AC4C-334083D1FEC5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ownable.tests", "ownable.tests\ownable.tests.csproj", "{FBCD346E-167C-4BD0-9162-FFEE99939337}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ownable.tests", "ownable.tests\ownable.tests.csproj", "{FBCD346E-167C-4BD0-9162-FFEE99939337}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ownable.benchmarks", "ownable.benchmarks\ownable.benchmarks.csproj", "{0AD1AB0B-C834-44F9-A07C-4D094D8FDD5F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ownable.benchmarks", "ownable.benchmarks\ownable.benchmarks.csproj", "{0AD1AB0B-C834-44F9-A07C-4D094D8FDD5F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
