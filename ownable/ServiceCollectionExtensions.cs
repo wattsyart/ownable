@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using ownable.Data;
 using ownable.Handlers;
 using ownable.Indexers;
 using ownable.Models;

@@ -2,11 +2,8 @@
 
 namespace ownable.Models.Indexed;
 
-public abstract class Transferred : Indexed
+public abstract class Transferred : Indexable
 {
-    [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
-
     [Indexed]
     public string? Address { get; set; }
 

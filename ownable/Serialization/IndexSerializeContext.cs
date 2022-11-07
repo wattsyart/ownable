@@ -1,6 +1,6 @@
 ﻿namespace ownable.Serialization;
 
-public class IndexSerializeContext : ISerializeContext
+public class IndexSerializeContext : ISerializeContext, IDisposable
 {
     public IndexSerializeContext(BinaryWriter bw) : this(bw, FormatVersion) { }
 
@@ -22,4 +22,9 @@ public class IndexSerializeContext : ISerializeContext
     public int Version { get; }
 
     #endregion
+
+    public void Dispose()
+    {
+        bw.Dispose();
+    }
 }

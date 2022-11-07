@@ -3,11 +3,8 @@ using ownable.Serialization;
 
 namespace ownable.Models.Indexed;
 
-public sealed class Contract : Indexed
+public sealed class Contract : Indexable
 {
-    [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
-
     [Indexed]
     public string? Address { get; set; }
 

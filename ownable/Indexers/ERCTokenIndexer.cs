@@ -5,6 +5,7 @@ using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
 using ownable.Contracts;
+using ownable.Data;
 using ownable.Models;
 using ownable.Models.Indexed;
 
@@ -54,7 +55,7 @@ internal abstract class ERCTokenIndexer : IIndexer
                 TokenId = new HexBigInteger(tokenId).ToString()
             };
 
-            _store.Index(received);
+            _store.Save(received);
 
             // await IndexContractAddress(web3, contractAddress, tokenId, blockNumber, cancellationToken);
         }
@@ -85,7 +86,7 @@ internal abstract class ERCTokenIndexer : IIndexer
                 TokenId = new HexBigInteger(tokenId).ToString()
             };
 
-            _store.Index(sent);
+            _store.Save(sent);
 
             // await IndexContractAddress(web3, contractAddress, tokenId, blockNumber, cancellationToken);
         }

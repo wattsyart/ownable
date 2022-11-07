@@ -1,8 +1,6 @@
-﻿using ownable.Models.Indexed;
+﻿namespace ownable.Serialization;
 
-namespace ownable.Serialization;
-
-public sealed class IndexDeserializeContext : IDeserializeContext
+public sealed class IndexDeserializeContext : IDeserializeContext, IDisposable
 {
     public int Version { get; }
 
@@ -15,5 +13,10 @@ public sealed class IndexDeserializeContext : IDeserializeContext
         Version = br.ReadInt32();
         if (Version > IndexSerializeContext.FormatVersion)
             throw new Exception("Tried to load index with a version that is too new");
+    }
+
+    public void Dispose()
+    {
+        br.Dispose();
     }
 }

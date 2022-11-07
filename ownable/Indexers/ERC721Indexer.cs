@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
 using ownable.Contracts;
+using ownable.Data;
 using ownable.Models;
 using Contract = ownable.Models.Indexed.Contract;
 
@@ -38,7 +39,7 @@ internal sealed class ERC721Indexer : ERCTokenIndexer
             if (!knownContracts.TryGetContract(contractAddress, out var contract) || contract == null)
                 continue;
             contract.BlockNumber = blockNumber.ToString();
-            _store.Index(new Contract
+            _store.Save(new Contract
             {
                 Address = contract.Address,
                 BlockNumber = contract.BlockNumber,
@@ -101,7 +102,7 @@ internal sealed class ERC721Indexer : ERCTokenIndexer
 
             try
             {
-                _store.Index(contract);
+                _store.Save(contract);
             }
             catch (Exception e)
             {

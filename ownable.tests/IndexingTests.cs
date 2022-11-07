@@ -1,4 +1,4 @@
-
+﻿using ownable.Data;
 using ownable.Models.Indexed;
 
 namespace ownable.tests
@@ -6,43 +6,90 @@ namespace ownable.tests
     public class IndexingTests
     {
         [Fact]
-        public void IndexAndRetrieveObjects()
+        public void AppendObjectAndLookupWithIndexedKeys()
         {
-            var store = new Store($"test-{Guid.NewGuid()}");
+            var path = $"test-{Guid.NewGuid()}";
+            var store = new Store(path);
+
+            var startLength = store.GetEntriesCount();
 
             try
             {
-                var id = Guid.NewGuid();
+                var contract = TestFactory.GetContract();
+                store.Append(contract);
 
-                var contract = new Contract
+                var indexLength = store.GetEntriesCount();
+                Assert.True(startLength < indexLength);
+
+                var cancellationToken = CancellationToken.None;
+
+                var contractById = store.GetById<Contract>(contract.Id, cancellationToken);
+                Assert.NotNull(contractById);
+                AssertEqual(contract, contractById!);
+                
                 {
-                    Address = "0xb47e3cd837ddf8e4c57f05d70ab865de6e193bbb",
-                    BlockNumber = "12345",
-                    Id = id,
-                    Name = "My NFT",
-                    Symbol = "NFT",
-                    Type = "ERC721"
-                };
+                    var contractWithAddress = store.Find<Contract>(nameof(Contract.Address), contract.Address, cancellationToken).ToList();
+                    Assert.Single(contractWithAddress);
+                    AssertEqual(contract, contractWithAddress.Single());
 
-                store.Index(contract);
+                    var contractWithBlockNumber = store.Find<Contract>(nameof(Contract.BlockNumber), contract.BlockNumber, cancellationToken).ToList();
+                    Assert.Single(contractWithBlockNumber);
+                    AssertEqual(contract, contractWithBlockNumber.Single());
+
+                    var contractWithName = store.Find<Contract>(nameof(Contract.Name), contract.Name, cancellationToken).ToList();
+                    Assert.Single(contractWithName);
+                    AssertEqual(contract, contractWithName.Single());
+
+                    var contractWithSymbol = store.Find<Contract>(nameof(Contract.Symbol), contract.Symbol, cancellationToken).ToList();
+                    Assert.Single(contractWithSymbol);
+                    AssertEqual(contract, contractWithSymbol.Single());
+
+                    var contractWithType = store.Find<Contract>(nameof(Contract.Type), contract.Type, cancellationToken).ToList();
+                    Assert.Single(contractWithType);
+                    AssertEqual(contract, contractWithType.Single());
+                }
+            }
+            finally
+            {
+                store.Dispose();
+            }
+        }
+
+        [Fact]
+        public void LegacyIndexAndRetrieveObjects()
+        {
+            var store = new Store($"test-{Guid.NewGuid()}");
+            var startLength = store.GetEntriesCount();
+
+            try
+            {
+                var contract = TestFactory.GetContract();
+                store.Save(contract);
+
+                var indexLength = store.GetEntriesCount();
+                Assert.True(startLength < indexLength);
 
                 var contracts = store.Get<Contract>(CancellationToken.None).ToList();
                 Assert.NotNull(contracts);
                 Assert.Single(contracts);
                 
                 var retrieved = contracts.Single();
-                Assert.Equal(contract.Address, retrieved.Address);
-                Assert.Equal(contract.BlockNumber, retrieved.BlockNumber);
-                Assert.Equal(contract.Id, retrieved.Id);
-                Assert.Equal(contract.Name, retrieved.Name);
-                Assert.Equal(contract.Symbol, retrieved.Symbol);
-                Assert.Equal(contract.Type, retrieved.Type);
-
+                AssertEqual(contract, retrieved);
             }
             finally
             {
                 store.Dispose();
             }
+        }
+
+        private static void AssertEqual(Contract expected, Contract actual)
+        {
+            Assert.Equal(expected.Address, actual.Address);
+            Assert.Equal(expected.BlockNumber, actual.BlockNumber);
+            Assert.Equal(expected.Id, actual.Id);
+            Assert.Equal(expected.Name, actual.Name);
+            Assert.Equal(expected.Symbol, actual.Symbol);
+            Assert.Equal(expected.Type, actual.Type);
         }
     }
 }
