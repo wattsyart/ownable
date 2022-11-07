@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ownable", "ownable\ownable.csproj", "{E20D5BC0-360C-449E-843B-468B31A93951}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ownable", "ownable\ownable.csproj", "{E20D5BC0-360C-449E-843B-468B31A93951}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ownable.host", "ownable.host\ownable.host.csproj", "{38EF09F9-CAF4-428F-AC4C-334083D1FEC5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ownable.host", "ownable.host\ownable.host.csproj", "{38EF09F9-CAF4-428F-AC4C-334083D1FEC5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ownable.tests", "ownable.tests\ownable.tests.csproj", "{FBCD346E-167C-4BD0-9162-FFEE99939337}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{38EF09F9-CAF4-428F-AC4C-334083D1FEC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{38EF09F9-CAF4-428F-AC4C-334083D1FEC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{38EF09F9-CAF4-428F-AC4C-334083D1FEC5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FBCD346E-167C-4BD0-9162-FFEE99939337}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBCD346E-167C-4BD0-9162-FFEE99939337}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBCD346E-167C-4BD0-9162-FFEE99939337}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBCD346E-167C-4BD0-9162-FFEE99939337}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

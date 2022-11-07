@@ -6,15 +6,19 @@ using ownable.Models.Indexed;
 
 namespace ownable;
 
-public class Store
+public class Store : IDisposable
 {
     private readonly LightningEnvironment _env;
     private readonly TypeRegistry _types;
     private readonly Dictionary<Type, Func<string, object>> _stringToObject;
 
-    public Store()
+    public Store() : this("store") { }
+
+    public Store(string path)
     {
-        _env = new LightningEnvironment("store", new EnvironmentConfiguration { MapSize = 10_485_760 });
+        Path = path;
+
+        _env = new LightningEnvironment(path, new EnvironmentConfiguration { MapSize = 10_485_760 });
         _env.MaxDatabases = 1;
         _env.Open();
 
@@ -31,6 +35,8 @@ public class Store
             {typeof(BigInteger), s => BigInteger.TryParse(s, out var value) ? value : BigInteger.Zero}
         };
     }
+
+    public string Path { get; set; }
 
     public void Index<T>(T instance)
     {
@@ -54,6 +60,8 @@ public class Store
 
     public IEnumerable<T> Get<T>(CancellationToken cancellationToken) where T : new()
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         using var tx = _env.BeginTransaction(TransactionBeginFlags.ReadOnly);
         using var db = tx.OpenDatabase(configuration: new DatabaseConfiguration { Flags = DatabaseOpenFlags.None });
         using var cursor = tx.CreateCursor(db);
@@ -125,5 +133,10 @@ public class Store
         }
 
         return entries.Values;
+    }
+
+    public void Dispose()
+    {
+        _env.Dispose();
     }
 }
