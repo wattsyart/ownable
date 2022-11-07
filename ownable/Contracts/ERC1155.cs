@@ -18,8 +18,15 @@ public class ERC1155 : ContractDeploymentMessage
     [Function("symbol", "string")]
     public class SymbolFunction : FunctionMessage { }
 
+    [Function("uri", "string")]
+    public class URIFunction : FunctionMessage
+    {
+        [Parameter("uint256", "tokenId", 1)]
+        public virtual BigInteger TokenId { get; set; }
+    }
+
     [Event("TransferBatch")]
-    public class TransferBatch : IEventDTO
+    public class TransferBatch : ITokenEvent
     {
         [Parameter("address", "operator", 1, true)]
         public virtual string Operator { get; set; }
@@ -31,10 +38,12 @@ public class ERC1155 : ContractDeploymentMessage
         public virtual List<BigInteger> Ids { get; set; }
         [Parameter("uint256[]", "values", 5, false)]
         public virtual List<BigInteger> Values { get; set; }
+
+        public BigInteger GetTokenId() => Ids.FirstOrDefault();
     }
 
     [Event("TransferSingle")]
-    public class TransferSingle : IEventDTO
+    public class TransferSingle : ITokenEvent
     {
         [Parameter("address", "operator", 1, true)]
         public virtual string Operator { get; set; }
@@ -46,6 +55,8 @@ public class ERC1155 : ContractDeploymentMessage
         public virtual BigInteger Id { get; set; }
         [Parameter("uint256", "value", 5, false)]
         public virtual BigInteger Value { get; set; }
+
+        public BigInteger GetTokenId() => Id;
     }
 
     public ERC1155() : base(string.Empty) { }

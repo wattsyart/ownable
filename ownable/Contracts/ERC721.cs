@@ -29,7 +29,7 @@ namespace ownable.Contracts
         }
 
         [Event("Transfer")]
-        public class Transfer : IEventDTO
+        public class Transfer : ITokenEvent
         {
             [Parameter("address", "from", 1, true)]
             public string From { get; set; } = null!;
@@ -39,6 +39,8 @@ namespace ownable.Contracts
 
             [Parameter("uint256", "tokenId", 3, true)]
             public BigInteger TokenId { get; set; }
+
+            public BigInteger GetTokenId() => TokenId;
         }
 
         public ERC721() : base(string.Empty) { }

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using ownable.Indexers;
+using ownable.Indexers.Metadata;
 using ownable.Models;
 using ownable.Services;
 
@@ -18,6 +19,8 @@ namespace ownable
 
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IIndexer, ERC721Indexer>());
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IIndexer, ERC1155Indexer>());
+
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, ArweaveMetadataProcessor>());
 
             services.Configure<Web3Options>(configuration.GetSection("Web3"));
             return services;

@@ -16,7 +16,7 @@ namespace ownable
             {
                 var address = arguments.Dequeue();
                 var service = serviceProvider.GetRequiredService<Web3Service>();
-                service.IndexAddressAsync(address).ConfigureAwait(false).GetAwaiter().GetResult();
+                service.IndexAddressAsync(address, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
             }
 
             return configuration;

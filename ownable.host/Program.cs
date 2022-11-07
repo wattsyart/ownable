@@ -2,6 +2,7 @@ using ownable;
 using ownable.host.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddHttpClient();
 builder.Services.AddCoreServices(builder.Configuration);
 
 IConfiguration configuration = builder.Configuration;

@@ -1,6 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Numerics;
+using Microsoft.Extensions.Logging;
 using Nethereum.Web3;
 using ownable.Contracts;
+using ownable.Indexers.Metadata;
 using ownable.Models;
 
 namespace ownable.Indexers;
@@ -9,16 +11,20 @@ internal sealed class ERC721Indexer : IIndexer
 {
     private readonly Store _store;
     private readonly IEnumerable<IKnownContracts> _knownContracts;
+    private readonly IEnumerable<IMetadataProcessor> _metadataProcessors;
+    private readonly IEnumerable<IMetadataIndexer> _metadataIndexers;
     private readonly ILogger<ERC721Indexer> _logger;
 
-    public ERC721Indexer(Store store, IEnumerable<IKnownContracts> knownContracts, ILogger<ERC721Indexer> logger)
+    public ERC721Indexer(Store store, IEnumerable<IKnownContracts> knownContracts, IEnumerable<IMetadataProcessor> metadataProcessors, IEnumerable<IMetadataIndexer> metadataIndexers,  ILogger<ERC721Indexer> logger)
     {
         _store = store;
         _knownContracts = knownContracts;
+        _metadataProcessors = metadataProcessors;
+        _metadataIndexers = metadataIndexers;
         _logger = logger;
     }
 
-    public async Task IndexAddressAsync(IWeb3 web3, string address)
+    public async Task IndexAddressAsync(IWeb3 web3, string address, CancellationToken cancellationToken)
     {
         var @event = web3.Eth.GetEvent<ERC721.Transfer>();
         var receivedByAddress = @event.CreateFilterInput(null, new object[] { address });
@@ -27,12 +33,13 @@ internal sealed class ERC721Indexer : IIndexer
         foreach (var change in changes)
         {
             var contractAddress = change.Log.Address;
+            var tokenId = change.Event.GetTokenId();
 
-            await IndexContractAddress(web3, contractAddress);
+            await IndexContractAddress(web3, contractAddress, tokenId, cancellationToken);
         }
     }
 
-    private async Task IndexContractAddress(IWeb3 web3, string contractAddress)
+    private async Task IndexContractAddress(IWeb3 web3, string contractAddress, BigInteger tokenId, CancellationToken cancellationToken)
     {
         foreach (var knownContracts in _knownContracts)
         {
@@ -83,6 +90,39 @@ internal sealed class ERC721Indexer : IIndexer
                 catch (Exception e)
                 {
                     _logger.LogWarning(e, "Contract Address {ContractAddress} does not support token symbol", contractAddress);
+                }
+            }
+
+            var supportsTokenUri = supportsMetadata || await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction { InterfaceId = InterfaceIds.TokenURI });
+            if (supportsTokenUri)
+            {
+                try
+                {
+                    var tokenUriQuery = web3.Eth.GetContractQueryHandler< ERC721.TokenURIFunction>();
+                    var tokenUri = await tokenUriQuery.QueryAsync<string>(contractAddress, new ERC721.TokenURIFunction { TokenId = tokenId });
+
+                    foreach (var processor in _metadataProcessors)
+                    {
+                        if (!processor.CanProcess(tokenUri))
+                            continue;
+
+                        var metadata = await processor.ProcessAsync(tokenUri, cancellationToken);
+                        if (metadata == null)
+                        {
+                            _logger.LogWarning("Processor {ProcessorName} failed to process metadata, when it reported it was capable", processor.GetType().Name);
+                        }
+                        else
+                        {
+                            foreach (var indexer in _metadataIndexers)
+                                await indexer.Index(metadata);
+
+                            break;
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogWarning(e, "Contract Address {ContractAddress} does not support token URI", contractAddress);
                 }
             }
 

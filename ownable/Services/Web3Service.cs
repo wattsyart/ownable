@@ -16,13 +16,13 @@ internal sealed class Web3Service
         _indexers = indexers;
     }
 
-    public async Task IndexAddressAsync(string address)
+    public async Task IndexAddressAsync(string address, CancellationToken cancellationToken)
     {
         var uri = new Uri(_options.CurrentValue.RpcUrl!);
         var client = new RpcClient(uri);
         var web3 = new Web3(client);
 
         foreach (var indexer in _indexers)
-            await indexer.IndexAddressAsync(web3, address);
+            await indexer.IndexAddressAsync(web3, address, cancellationToken);
     }
 }
