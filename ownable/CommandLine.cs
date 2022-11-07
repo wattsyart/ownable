@@ -13,7 +13,7 @@ public static class CommandLine
     static CommandLine()
     {
         AddCommand("stat", StatOptions);
-        AddCommand("index", BuiltIn.IndexAddress);
+        AddCommand("index", ownable.Commands.IndexAddress);
     }
 
     public static void AddCommand(string commandName, Func<IConfiguration, IServiceProvider, Queue<string>, IConfiguration> commandFunc)

@@ -4,15 +4,17 @@ namespace ownable.Handlers;
 
 internal sealed class FileImageHandler : IMetadataImageHandler
 {
-    public async Task<bool> HandleAsync(Stream stream, string contractAddress, BigInteger tokenId, string? extension, CancellationToken cancellationToken)
+    public async Task<bool> HandleAsync(Stream stream, string contractAddress, BigInteger tokenId, BigInteger blockNumber, string? extension, CancellationToken cancellationToken)
     {
         var imagesDir = "images";
         var outputDir = Path.Combine(imagesDir, contractAddress);
+        var outputBlockDir = Path.Combine(outputDir, blockNumber.ToString());
 
         Directory.CreateDirectory(imagesDir);
         Directory.CreateDirectory(outputDir);
+        Directory.CreateDirectory(outputBlockDir);
 
-        var path = Path.Combine(outputDir, tokenId + extension);
+        var path = Path.Combine(outputBlockDir, tokenId + extension);
         if (File.Exists(path))
             File.Delete(path);
 

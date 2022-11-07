@@ -1,8 +1,7 @@
 ﻿using System.Reflection;
 using System.Text;
-using ownable.Models;
 
-namespace ownable;
+namespace ownable.Models;
 
 public sealed class TypeRegistry
 {
@@ -15,6 +14,11 @@ public sealed class TypeRegistry
     private readonly Dictionary<Type, Action<object, object>> _setKey;
     private readonly Dictionary<Type, Dictionary<string, Action<object, object>>> _setField;
 
+    private readonly Dictionary<Type, Dictionary<string, Type>> _fieldType;
+    private readonly Dictionary<Type, Type> _keyType;
+
+    private readonly Dictionary<Type, Func<object, string?>> _objectToString;
+
     public TypeRegistry()
     {
         _typeToKeyPrefix = new Dictionary<Type, string>();
@@ -26,6 +30,15 @@ public sealed class TypeRegistry
 
         _setKey = new Dictionary<Type, Action<object, object>>();
         _setField = new Dictionary<Type, Dictionary<string, Action<object, object>>>();
+
+        _keyType = new Dictionary<Type, Type>();
+        _fieldType = new Dictionary<Type, Dictionary<string, Type>>();
+
+        _objectToString = new Dictionary<Type, Func<object, string?>>
+        {
+            {typeof(string), o => (string) o},
+            {typeof(Guid), o => o.ToString()!}
+        };
     }
 
     public void Register<T>() => Register(typeof(T));
@@ -47,6 +60,7 @@ public sealed class TypeRegistry
         if (keyProperty == null)
             throw new InvalidOperationException("Cannot register a type with no Key property");
 
+        _keyType[type] = keyProperty.PropertyType;
         _setKey[type] = (instance, value) => { keyProperty.SetValue(instance, value); };
 
         _typeToKeyPrefix[type] = RegisterKeyPrefix();
@@ -55,12 +69,16 @@ public sealed class TypeRegistry
 
         foreach (var indexedProperty in indexed)
         {
-            if (!_setField.TryGetValue(type, out var fieldMap))
-                _setField.Add(type, fieldMap = new Dictionary<string, Action<object, object>>());
+            if (!_setField.TryGetValue(type, out var fieldSetMap))
+                _setField.Add(type, fieldSetMap = new Dictionary<string, Action<object, object>>());
+
+            if (!_fieldType.TryGetValue(type, out var fieldTypeMap))
+                _fieldType.Add(type, fieldTypeMap = new Dictionary<string, Type>());
 
             var field = indexedProperty.Name;
 
-            fieldMap[field] = (instance, value) => { indexedProperty.SetValue(instance, value); };
+            fieldTypeMap[field] = indexedProperty.PropertyType;
+            fieldSetMap[field] = (instance, value) => { indexedProperty.SetValue(instance, value); };
 
             if (!_typeToIndexPrefix.TryGetValue(type, out var indexKeyMap))
                 _typeToIndexPrefix.Add(type, indexKeyMap = new Dictionary<string, Func<object, byte[]>>());
@@ -74,18 +92,19 @@ public sealed class TypeRegistry
             {
                 var key = indexKeyMap[field](instance);
                 var value = indexedProperty.GetValue(instance);
+                var valueString = _objectToString[indexedProperty.PropertyType](value!);
 
                 return (key,
                     value: value == null
                         ? Array.Empty<byte>()
-                        : Encoding.UTF8.GetBytes(value.ToString() ?? throw new InvalidOperationException()));
+                        : Encoding.UTF8.GetBytes(valueString ?? throw new InvalidOperationException()));
             };
         }
     }
 
     private static string RegisterIndexPrefix(string field)
     {
-        return $"B:I:{field}";
+        return $"B:I:{field}:";
     }
 
     private static string RegisterKeyPrefix()
@@ -140,5 +159,15 @@ public sealed class TypeRegistry
     {
         if (instance == null) throw new ArgumentNullException(nameof(instance));
         _setField[typeof(T)][field](instance, value);
+    }
+
+    public Type GetKeyType<T>()
+    {
+        return _keyType[typeof(T)];
+    }
+
+    public Type GetFieldType<T>(string field)
+    {
+        return _fieldType[typeof(T)][field];
     }
 }

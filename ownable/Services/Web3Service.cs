@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using Nethereum.JsonRpc.Client;
+using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
 using ownable.Models;
 
@@ -16,13 +17,13 @@ internal sealed class Web3Service
         _indexers = indexers;
     }
 
-    public async Task IndexAddressAsync(string address, CancellationToken cancellationToken)
+    public async Task IndexAddressAsync(string address, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken)
     {
         var uri = new Uri(_options.CurrentValue.RpcUrl!);
         var client = new RpcClient(uri);
         var web3 = new Web3(client);
 
         foreach (var indexer in _indexers)
-            await indexer.IndexAsync(web3, address, cancellationToken);
+            await indexer.IndexAsync(web3, address, fromBlock, toBlock, cancellationToken);
     }
 }

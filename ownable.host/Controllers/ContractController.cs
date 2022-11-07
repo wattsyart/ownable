@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using ownable.Models;
+using ownable.Models.Indexed;
 
 namespace ownable.host.Controllers;
 

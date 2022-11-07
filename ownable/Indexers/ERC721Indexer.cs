@@ -1,12 +1,14 @@
 ﻿using System.Numerics;
 using Microsoft.Extensions.Logging;
+using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
 using ownable.Contracts;
 using ownable.Models;
+using Contract = ownable.Models.Indexed.Contract;
 
 namespace ownable.Indexers;
 
-internal sealed class ERC721Indexer : IIndexer
+internal sealed class ERC721Indexer : ERCTokenIndexer
 {
     private readonly Store _store;
     private readonly IEnumerable<IKnownContracts> _knownContracts;
@@ -14,7 +16,8 @@ internal sealed class ERC721Indexer : IIndexer
     private readonly MetadataIndexer _metadataIndexer;
     private readonly ILogger<ERC721Indexer> _logger;
 
-    public ERC721Indexer(Store store, IEnumerable<IKnownContracts> knownContracts, IEnumerable<IMetadataProcessor> metadataProcessors, MetadataIndexer metadataIndexer,  ILogger<ERC721Indexer> logger)
+    public ERC721Indexer(Store store, IEnumerable<IKnownContracts> knownContracts, IEnumerable<IMetadataProcessor> metadataProcessors, MetadataIndexer metadataIndexer,  ILogger<ERC721Indexer> logger) :
+        base(store, logger)
     {
         _store = store;
         _knownContracts = knownContracts;
@@ -23,83 +26,54 @@ internal sealed class ERC721Indexer : IIndexer
         _logger = logger;
     }
 
-    public async Task IndexAsync(IWeb3 web3, string rootAddress, CancellationToken cancellationToken)
+    public override async Task IndexAsync(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken)
     {
-        var @event = web3.Eth.GetEvent<ERC721.Transfer>();
-        var receivedByAddress = @event.CreateFilterInput(null, new object[] { rootAddress });
-        var changes = await @event.GetAllChangesAsync(receivedByAddress);
-
-        foreach (var change in changes)
-        {
-            var contractAddress = change.Log.Address;
-            var tokenId = change.Event.GetTokenId();
-
-            await IndexContractAddress(web3, contractAddress, tokenId, cancellationToken);
-        }
+        await IndexTransfersAsync<ERC721.Transfer>(web3, rootAddress, fromBlock, toBlock, cancellationToken);
     }
 
-    private async Task IndexContractAddress(IWeb3 web3, string contractAddress, BigInteger tokenId, CancellationToken cancellationToken)
+    protected override async Task IndexContractAddress(IWeb3 web3, string contractAddress, BigInteger tokenId, BigInteger blockNumber, CancellationToken cancellationToken)
     {
         foreach (var knownContracts in _knownContracts)
         {
             if (!knownContracts.TryGetContract(contractAddress, out var contract) || contract == null)
                 continue;
-
-            _store.Index(contract);
+            contract.BlockNumber = blockNumber.ToString();
+            _store.Index(new Contract
+            {
+                Address = contract.Address,
+                BlockNumber = contract.BlockNumber,
+                Name = contract.Name,
+                Symbol = contract.Symbol,
+                Type = contract.Type
+            });
             return;
         }
 
-        var supportsInterfaceQuery = web3.Eth.GetContractQueryHandler<ERC165.SupportsInterfaceFunction>();
+        var features = await GetContractFeaturesAsync(web3, contractAddress, InterfaceIds.ERC721, InterfaceIds.ERC721Metadata, InterfaceIds.TokenURI, InterfaceIds.Name, InterfaceIds.Symbol);
 
-        var supportsErc721 = await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction { InterfaceId = InterfaceIds.ERC721 });
-        var supportsMetadata = await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction {InterfaceId = InterfaceIds.ERC721Metadata });
-        
-        if (supportsErc721)
+        if (features.SupportsMetadata())
+        {
+            features |= ContractFeatures.SupportsName;
+            features |= ContractFeatures.SupportsSymbol;
+            features |= ContractFeatures.SupportsUri;
+        }
+
+        if (features.SupportsStandard())
         {
             var contract = new Contract
             {
                 Address = contractAddress,
-                Type = "ERC721"
+                Type = "ERC721",
+                BlockNumber = blockNumber.ToString(),
+                Name = await TryGetNameAsync<ERC721.NameFunction>(web3, contractAddress, features),
+                Symbol = await TryGetSymbolAsync<ERC721.SymbolFunction>(web3, contractAddress, features)
             };
 
-            var supportsName = supportsMetadata || await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction { InterfaceId = InterfaceIds.Name });
-            if (supportsName)
+            try
             {
-                try
+                var tokenUri = await TryGetTokenUriAsync<ERC721.TokenURIFunction>(web3, contractAddress, tokenId, features);
+                if (tokenUri != null)
                 {
-                    var nameQuery = web3.Eth.GetContractQueryHandler<ERC721.NameFunction>();
-                    var name = await nameQuery.QueryAsync<string>(contractAddress, new ERC721.NameFunction());
-                    contract.Name = name;
-                }
-                catch (Exception e)
-                {
-                    _logger.LogWarning(e, "Contract Address {ContractAddress} failed to fetch token name", contractAddress);
-                }
-            }
-
-            var supportsSymbol = supportsMetadata || await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction { InterfaceId = InterfaceIds.Symbol });
-            if (supportsSymbol)
-            {
-                try
-                {
-                    var symbolQuery = web3.Eth.GetContractQueryHandler<ERC721.SymbolFunction>();
-                    var symbol = await symbolQuery.QueryAsync<string>(contractAddress, new ERC721.SymbolFunction());
-                    contract.Symbol = symbol;
-                }
-                catch (Exception e)
-                {
-                    _logger.LogWarning(e, "Contract Address {ContractAddress} failed to fetch token symbol", contractAddress);
-                }
-            }
-
-            var supportsTokenUri = supportsMetadata || await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction { InterfaceId = InterfaceIds.TokenURI });
-            if (supportsTokenUri)
-            {
-                try
-                {
-                    var tokenUriQuery = web3.Eth.GetContractQueryHandler< ERC721.TokenURIFunction>();
-                    var tokenUri = await tokenUriQuery.QueryAsync<string>(contractAddress, new ERC721.TokenURIFunction { TokenId = tokenId });
-
                     var foundProcessor = false;
                     JsonTokenMetadata? metadata = null;
                     foreach (var processor in _metadataProcessors)
@@ -109,20 +83,20 @@ internal sealed class ERC721Indexer : IIndexer
 
                         foundProcessor = true;
                         metadata = await processor.ProcessAsync(tokenUri, cancellationToken);
-                        
+
                         if (metadata == null)
                             _logger.LogWarning("Processor {ProcessorName} failed to process metadata, when it reported it was capable", processor.GetType().Name);
                     }
 
                     if (metadata != null)
-                        await _metadataIndexer.IndexAsync(metadata, contractAddress, tokenId, cancellationToken);
-                    else if(!foundProcessor)
+                        await _metadataIndexer.IndexAsync(metadata, contractAddress, tokenId, blockNumber, cancellationToken);
+                    else if (!foundProcessor)
                         _logger.LogWarning("No metadata processor found for {Uri}", tokenUri);
                 }
-                catch (Exception e)
-                {
-                    _logger.LogWarning(e, "Contract Address {ContractAddress} failed to fetch token URI", contractAddress);
-                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogWarning(e, "Contract Address {ContractAddress} failed to fetch token URI", contractAddress);
             }
 
             try

@@ -18,7 +18,7 @@ internal sealed class MetadataIndexer
         _logger = logger;
     }
 
-    public async Task IndexAsync(JsonTokenMetadata metadata, string contractAddress, BigInteger tokenId, CancellationToken cancellationToken)
+    public async Task IndexAsync(JsonTokenMetadata metadata, string contractAddress, BigInteger tokenId, BigInteger blockNumber, CancellationToken cancellationToken)
     {
         foreach (var processor in _imageProcessors)
         {
@@ -38,7 +38,7 @@ internal sealed class MetadataIndexer
             {
                 foreach (var handler in _imageHandlers)
                 {
-                    if (await handler.HandleAsync(stream, contractAddress, tokenId, extension, cancellationToken))
+                    if (await handler.HandleAsync(stream, contractAddress, tokenId, blockNumber, extension, cancellationToken))
                         break;
                 }
             }

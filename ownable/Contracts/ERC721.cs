@@ -16,20 +16,20 @@ public class ERC721 : ContractDeploymentMessage
     public virtual string BaseTokenURI { get; set; } = null!;
 
     [Function("symbol", "string")]
-    public class SymbolFunction : FunctionMessage { }
+    public class SymbolFunction : FunctionMessage, IParameterlessStringFunction { }
 
     [Function("name", "string")]
-    public class NameFunction : FunctionMessage { }
+    public class NameFunction : FunctionMessage, IParameterlessStringFunction { }
 
     [Function("tokenURI", "string")]
-    public class TokenURIFunction : FunctionMessage
+    public class TokenURIFunction : FunctionMessage, ITokenUriFunction
     {
         [Parameter("uint256", "tokenId")]
         public BigInteger TokenId { get; set; }
     }
 
     [Event("Transfer")]
-    public class Transfer : ITokenEvent
+    public class Transfer : ITokenEvent, ITransferEvent
     {
         [Parameter("address", "from", 1, true)]
         public string From { get; set; } = null!;

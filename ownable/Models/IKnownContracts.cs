@@ -1,4 +1,6 @@
-﻿namespace ownable.Models;
+﻿using ownable.Models.Indexed;
+
+namespace ownable.Models;
 
 public interface IKnownContracts
 {

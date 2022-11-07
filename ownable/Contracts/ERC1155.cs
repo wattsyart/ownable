@@ -13,20 +13,20 @@ public class ERC1155 : ContractDeploymentMessage
     public virtual string Symbol { get; set; } = null!;
 
     [Function("name", "string")]
-    public class NameFunction : FunctionMessage { }
+    public class NameFunction : FunctionMessage, IParameterlessStringFunction { }
 
     [Function("symbol", "string")]
-    public class SymbolFunction : FunctionMessage { }
+    public class SymbolFunction : FunctionMessage, IParameterlessStringFunction { }
 
     [Function("uri", "string")]
-    public class URIFunction : FunctionMessage
+    public class URIFunction : FunctionMessage, ITokenUriFunction
     {
         [Parameter("uint256", "tokenId", 1)]
         public virtual BigInteger TokenId { get; set; }
     }
 
     [Event("TransferBatch")]
-    public class TransferBatch : ITokenEvent
+    public class TransferBatch : ITokenEvent, ITransferEvent
     {
         [Parameter("address", "operator", 1, true)]
         public virtual string Operator { get; set; }
@@ -43,7 +43,7 @@ public class ERC1155 : ContractDeploymentMessage
     }
 
     [Event("TransferSingle")]
-    public class TransferSingle : ITokenEvent
+    public class TransferSingle : ITokenEvent, ITransferEvent
     {
         [Parameter("address", "operator", 1, true)]
         public virtual string Operator { get; set; }

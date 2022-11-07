@@ -1,4 +1,6 @@
-﻿namespace ownable.Models;
+﻿using ownable.Models.Indexed;
+
+namespace ownable.Models;
 
 internal sealed class KnownContracts : IKnownContracts
 {

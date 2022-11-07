@@ -1,6 +1,8 @@
-﻿using LightningDB;
+﻿using System.Numerics;
+using LightningDB;
 using System.Text;
 using ownable.Models;
+using ownable.Models.Indexed;
 
 namespace ownable;
 
@@ -8,6 +10,7 @@ public class Store
 {
     private readonly LightningEnvironment _env;
     private readonly TypeRegistry _types;
+    private readonly Dictionary<Type, Func<string, object>> _stringToObject;
 
     public Store()
     {
@@ -17,6 +20,16 @@ public class Store
 
         _types = new TypeRegistry();
         _types.Register<Contract>();
+        _types.Register<Received>();
+        _types.Register<Sent>();
+
+        _stringToObject = new Dictionary<Type, Func<string, object>>
+        {
+            {typeof(string), s => s},
+            {typeof(Guid), s => Guid.TryParse(s, out var value) ? value : Guid.Empty},
+            {typeof(ulong), s => ulong.TryParse(s, out var value) ? value : 0UL},
+            {typeof(BigInteger), s => BigInteger.TryParse(s, out var value) ? value : BigInteger.Zero}
+        };
     }
 
     public void Index<T>(T instance)
@@ -31,6 +44,8 @@ public class Store
         foreach (var indexed in _types.GetIndexed(instance))
         {
             var (key, value) = indexed(instance);
+            var rawKey = Encoding.UTF8.GetString(key);
+            var rawValue = Encoding.UTF8.GetString(value);
             tx.Put(db, key, value);
         }
 
@@ -43,10 +58,10 @@ public class Store
         using var db = tx.OpenDatabase(configuration: new DatabaseConfiguration { Flags = DatabaseOpenFlags.None });
         using var cursor = tx.CreateCursor(db);
 
-        var entries = new Dictionary<string, T>();
+        var entries = new Dictionary<object, T>();
 
         {
-            var keyPrefix = _types.GetKeyPrefix<Contract>();
+            var keyPrefix = _types.GetKeyPrefix<T>();
             var sr = cursor.SetRange(keyPrefix);
             if (sr != MDBResultCode.Success)
                 return entries.Values;
@@ -62,7 +77,8 @@ public class Store
                 if (index.Length == 0)
                     break;
 
-                var key = Encoding.UTF8.GetString(index);
+                var keyType = _types.GetKeyType<T>();
+                var key = _stringToObject[keyType](Encoding.UTF8.GetString(index));
                 var value = new T();
 
                 _types.SetKey(value, key);
@@ -94,7 +110,12 @@ public class Store
                     if (index.Length == 0)
                         break;
 
-                    _types.SetField(entry.Value, field, Encoding.UTF8.GetString(index));
+                    var keyRawValue = Encoding.UTF8.GetString(k.AsSpan());
+                    var fieldType = _types.GetFieldType<T>(field);
+                    var fieldRawValue = Encoding.UTF8.GetString(index);
+                    var fieldValue = _stringToObject[fieldType](fieldRawValue);
+
+                    _types.SetField(entry.Value, field, fieldValue);
 
                     r = cursor.Next();
                     if (r == MDBResultCode.Success)
