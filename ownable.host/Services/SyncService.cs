@@ -1,10 +1,9 @@
-﻿namespace ownable.host.Services
+﻿namespace ownable.host.Services;
+
+public class SyncService : BackgroundService
 {
-    public class SyncService : BackgroundService
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            return Task.CompletedTask;
-        }
+        return Task.CompletedTask;
     }
 }

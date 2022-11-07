@@ -25,7 +25,7 @@ internal sealed class KnownContracts : IKnownContracts
 
     private void AddContract(Contract contract)
     {
-        _registry[contract.Address] = contract;
+        _registry[contract.Address!] = contract;
     }
 
     public bool TryGetContract(string contractAddress, out Contract? contract) => _registry.TryGetValue(contractAddress, out contract);

@@ -1,13 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace ownable.host.Controllers
+namespace ownable.host.Controllers;
+
+public class PingController : Controller
 {
-    public class PingController : Controller
+    [HttpGet("ping")]
+    public IActionResult Ping()
     {
-        [HttpGet("ping")]
-        public IActionResult Ping()
-        {
-            return Ok();
-        }
+        return Ok();
     }
 }

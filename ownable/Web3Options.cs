@@ -1,7 +1,6 @@
-﻿namespace ownable
+﻿namespace ownable;
+
+public class Web3Options
 {
-    public class Web3Options
-    {
-        public string? RpcUrl { get; set; }
-    }
+    public string? RpcUrl { get; set; }
 }
