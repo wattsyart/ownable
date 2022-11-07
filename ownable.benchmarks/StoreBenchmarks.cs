@@ -4,6 +4,7 @@ using ownable.Models.Indexed;
 
 namespace ownable.benchmarks;
 
+[MemoryDiagnoser]
 public class StoreBenchmarks
 {
     private Store _store = null!;
