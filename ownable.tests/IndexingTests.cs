@@ -6,6 +6,29 @@ namespace ownable.tests
     public class IndexingTests
     {
         [Fact]
+        public void LookupScalability()
+        {
+            var path = $"test-{Guid.NewGuid()}";
+            var store = new Store(path);
+
+            var keys = new List<byte[]>();
+            for (var i = 0; i < 1000; i++)
+            {
+                var contract = TestFactory.GetContract();
+                contract.Name = Guid.NewGuid().ToString();
+                store.Append(contract);
+                keys.Add(KeyBuilder.LookupKey(typeof(Contract), nameof(Contract.Name), contract.Name));
+            }
+
+            foreach (var key in keys)
+            {
+                var results = store.FindByKey<Contract>(key, CancellationToken.None);
+                Assert.NotNull(results);
+                Assert.Single(results);
+            }
+        }
+
+        [Fact]
         public void AppendObjectAndLookupWithIndexedKeys()
         {
             var path = $"test-{Guid.NewGuid()}";
