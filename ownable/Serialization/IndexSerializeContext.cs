@@ -1,6 +1,4 @@
-﻿using ownable.Serialization;
-
-namespace ownable.Models.Indexed;
+﻿namespace ownable.Serialization;
 
 public class IndexSerializeContext : ISerializeContext
 {

@@ -12,6 +12,7 @@ public class Store : IDisposable
     private readonly TypeRegistry _types;
     private readonly Dictionary<Type, Func<string, object>> _stringToObject;
 
+    // ReSharper disable once UnusedMember.Global (Reflection)
     public Store() : this("store") { }
 
     public Store(string path)

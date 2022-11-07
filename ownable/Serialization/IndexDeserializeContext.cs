@@ -1,6 +1,6 @@
-﻿using ownable.Serialization;
+﻿using ownable.Models.Indexed;
 
-namespace ownable.Models.Indexed;
+namespace ownable.Serialization;
 
 public sealed class IndexDeserializeContext : IDeserializeContext
 {
