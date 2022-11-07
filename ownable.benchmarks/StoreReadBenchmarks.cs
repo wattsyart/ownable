@@ -16,6 +16,7 @@ public class StoreReadBenchmarks
     [IterationSetup]
     public void IterationSetup()
     {
+        _store.Dispose();
         _store = new Store($"benchmark-{Guid.NewGuid()}");
         _items.Clear();
         for (var i = 0; i < Count; i++)
