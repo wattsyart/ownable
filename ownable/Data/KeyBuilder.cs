@@ -24,18 +24,11 @@ namespace ownable.Data
             return prefix;
         }
        
-        public static bool IndexKey(PropertyInfo property, object target, byte[] id, out byte[]? indexKey)
+        public static byte[] IndexKey(PropertyInfo property, object target, byte[] id)
         {
-            if (!property.CanRead || !property.HasAttribute<IndexedAttribute>())
-            {
-                indexKey = default;
-                return false;
-            }
-
             var type = property.DeclaringType ?? target.GetType();
             var value = property.GetValue(target);
-            indexKey = IndexKey(type, property.Name, value!.ToString(), id);
-            return true;
+            return IndexKey(type, property.Name, value!.ToString(), id);
         }
 
         public static byte[] IndexKey(Type type, string key, string? value, byte[] id)

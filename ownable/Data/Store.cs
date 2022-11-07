@@ -5,6 +5,7 @@ using System.Text;
 using ownable.Models;
 using ownable.Models.Indexed;
 using ownable.Serialization;
+using System.Reflection;
 
 namespace ownable.Data;
 
@@ -139,6 +140,8 @@ public class Store : IDisposable
 
     private const ushort MaxKeySizeBytes = 511;
 
+    private Dictionary<Type, PropertyInfo[]> _cachedProperties = new();
+
     public void Append<T>(T indexable) where T : Indexable
     {
         if (indexable == null) throw new ArgumentNullException(nameof(indexable));
@@ -153,14 +156,15 @@ public class Store : IDisposable
 
         Index(db, tx, key, ms.ToArray());
 
-        foreach (var property in typeof(T).GetProperties())
-        {
-            if (!property.HasAttribute<IndexedAttribute>())
-                continue;
-            if (!KeyBuilder.IndexKey(property, indexable, key, out var indexKey) || indexKey == null)
-                continue;
-            Index(db, tx, indexKey, key);
-        }
+        if(!_cachedProperties.TryGetValue(typeof(T), out var properties))
+            _cachedProperties.Add(typeof(T), properties = 
+                typeof(T).GetProperties()
+                .Where(x => x.CanRead && x.HasAttribute<IndexedAttribute>())
+                .ToArray()
+                );
+
+        foreach (var property in properties)
+            Index(db, tx, KeyBuilder.IndexKey(property, indexable, key), key);
 
         tx.Commit();
     }
