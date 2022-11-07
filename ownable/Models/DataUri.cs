@@ -50,6 +50,7 @@ namespace ownable.Models
                     break;
             }
 
+            format.ContentType = $"data:image/{imageType}";
             format.Data = format.IsBase64 ? Convert.FromBase64String(data) : Encoding.UTF8.GetBytes(data);
             return true;
         }
@@ -78,6 +79,7 @@ namespace ownable.Models
                     break;
             }
 
+            format.ContentType = $"data:application/{applicationType}";
             format.Data = format.IsBase64 ? Convert.FromBase64String(data) : Encoding.UTF8.GetBytes(data);
             return true;
         }

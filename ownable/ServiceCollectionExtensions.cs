@@ -5,6 +5,7 @@ using ownable.Handlers;
 using ownable.Indexers;
 using ownable.Models;
 using ownable.Processors;
+using ownable.Processors.Images;
 using ownable.Services;
 
 namespace ownable
@@ -21,10 +22,10 @@ namespace ownable
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IIndexer, ERC721Indexer>());
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IIndexer, ERC1155Indexer>());
 
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, ArweaveMetadataProcessor>());
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, HttpMetadataProcessor>());
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, DataUriMetadataProcessor>());
 
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataImageProcessor, UriImageProcessor>());
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataImageProcessor, HttpImageProcessor>());
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataImageProcessor, DataUriImageProcessor>());
 
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataImageHandler, FileImageHandler>());

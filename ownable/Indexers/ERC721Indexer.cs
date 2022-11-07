@@ -73,7 +73,7 @@ internal sealed class ERC721Indexer : IIndexer
                 }
                 catch (Exception e)
                 {
-                    _logger.LogWarning(e, "Contract Address {ContractAddress} does not support token name", contractAddress);
+                    _logger.LogWarning(e, "Contract Address {ContractAddress} failed to fetch token name", contractAddress);
                 }
             }
 
@@ -88,7 +88,7 @@ internal sealed class ERC721Indexer : IIndexer
                 }
                 catch (Exception e)
                 {
-                    _logger.LogWarning(e, "Contract Address {ContractAddress} does not support token symbol", contractAddress);
+                    _logger.LogWarning(e, "Contract Address {ContractAddress} failed to fetch token symbol", contractAddress);
                 }
             }
 
@@ -119,7 +119,7 @@ internal sealed class ERC721Indexer : IIndexer
                 }
                 catch (Exception e)
                 {
-                    _logger.LogWarning(e, "Contract Address {ContractAddress} does not support token URI", contractAddress);
+                    _logger.LogWarning(e, "Contract Address {ContractAddress} failed to fetch token URI", contractAddress);
                 }
             }
 
