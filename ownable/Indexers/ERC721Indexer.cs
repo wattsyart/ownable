@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Web3;
 using ownable.Contracts;
 using ownable.Models;
@@ -8,8 +7,6 @@ namespace ownable.Indexers;
 
 internal sealed class ERC721Indexer : IIndexer
 {
-    private static readonly byte[] InterfaceId = "0x80ac58cd".HexToByteArray();
-
     private readonly Store _store;
     private readonly IEnumerable<IKnownContracts> _knownContracts;
     private readonly ILogger<ERC721Indexer> _logger;
@@ -47,10 +44,11 @@ internal sealed class ERC721Indexer : IIndexer
         }
 
         var supportsInterfaceQuery = web3.Eth.GetContractQueryHandler<ERC165.SupportsInterfaceFunction>();
-        var supportsInterface = await supportsInterfaceQuery.QueryAsync<bool>(contractAddress,
-            new ERC165.SupportsInterfaceFunction {InterfaceId = InterfaceId});
 
-        if (supportsInterface)
+        var supportsErc721 = await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction { InterfaceId = InterfaceIds.ERC721 });
+        var supportsMetadata = await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction {InterfaceId = InterfaceIds.ERC721Metadata });
+        
+        if (supportsErc721)
         {
             var contract = new Contract
             {
@@ -58,26 +56,34 @@ internal sealed class ERC721Indexer : IIndexer
                 Type = "ERC721"
             };
 
-            try
+            var supportsName = supportsMetadata || await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction { InterfaceId = InterfaceIds.Name });
+            if (supportsName)
             {
-                var nameQuery = web3.Eth.GetContractQueryHandler<ERC721.NameFunction>();
-                var name = await nameQuery.QueryAsync<string>(contractAddress, new ERC721.NameFunction());
-                contract.Name = name;
-            }
-            catch (Exception e)
-            {
-                _logger.LogWarning(e, "Contract Address {ContractAddress} does not support token name", contractAddress);
+                try
+                {
+                    var nameQuery = web3.Eth.GetContractQueryHandler<ERC721.NameFunction>();
+                    var name = await nameQuery.QueryAsync<string>(contractAddress, new ERC721.NameFunction());
+                    contract.Name = name;
+                }
+                catch (Exception e)
+                {
+                    _logger.LogWarning(e, "Contract Address {ContractAddress} does not support token name", contractAddress);
+                }
             }
 
-            try
+            var supportsSymbol = supportsMetadata || await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction { InterfaceId = InterfaceIds.Symbol });
+            if (supportsSymbol)
             {
-                var symbolQuery = web3.Eth.GetContractQueryHandler<ERC721.SymbolFunction>();
-                var symbol = await symbolQuery.QueryAsync<string>(contractAddress, new ERC721.SymbolFunction());
-                contract.Symbol = symbol;
-            }
-            catch (Exception e)
-            {
-                _logger.LogWarning(e, "Contract Address {ContractAddress} does not support token symbol", contractAddress);
+                try
+                {
+                    var symbolQuery = web3.Eth.GetContractQueryHandler<ERC721.SymbolFunction>();
+                    var symbol = await symbolQuery.QueryAsync<string>(contractAddress, new ERC721.SymbolFunction());
+                    contract.Symbol = symbol;
+                }
+                catch (Exception e)
+                {
+                    _logger.LogWarning(e, "Contract Address {ContractAddress} does not support token symbol", contractAddress);
+                }
             }
 
             try
