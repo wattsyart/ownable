@@ -1,12 +1,12 @@
 ﻿using ownable.Models;
 
-namespace ownable.Indexers.Processors;
+namespace ownable.Processors;
 
-internal sealed class OffChainImageProcessor : IMetadataImageProcessor
+internal sealed class UriImageProcessor : IMetadataImageProcessor
 {
     private readonly HttpClient _http;
 
-    public OffChainImageProcessor(HttpClient http)
+    public UriImageProcessor(HttpClient http)
     {
         _http = http;
     }

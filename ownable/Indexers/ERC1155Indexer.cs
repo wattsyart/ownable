@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using Nethereum.Web3;
 using ownable.Contracts;
-using ownable.Indexers.Processors;
 using ownable.Models;
 using Contract = ownable.Models.Contract;
 

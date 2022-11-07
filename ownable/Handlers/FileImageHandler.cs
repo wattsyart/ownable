@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace ownable.Indexers.Handlers;
+namespace ownable.Handlers;
 
 internal sealed class FileImageHandler : IMetadataImageHandler
 {

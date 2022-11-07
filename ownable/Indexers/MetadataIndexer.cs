@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 using Microsoft.Extensions.Logging;
-using ownable.Indexers.Handlers;
+using ownable.Handlers;
 using ownable.Models;
 
 namespace ownable.Indexers

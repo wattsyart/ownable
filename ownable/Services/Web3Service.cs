@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using Nethereum.JsonRpc.Client;
 using Nethereum.Web3;
-using ownable.Indexers;
 using ownable.Models;
 
 namespace ownable.Services;
