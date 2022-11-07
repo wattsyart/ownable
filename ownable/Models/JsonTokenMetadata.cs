@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using ownable.Serialization;
 
 namespace ownable.Models
 {
@@ -20,6 +21,7 @@ namespace ownable.Models
         public string? ImageData { get; set; }
 
         [JsonPropertyName("attributes")]
+        [JsonConverter(typeof(EmptyStringAttributesConverter))]
         public List<JsonTokenMetadataAttribute> Attributes { get; set; } = new();
     }
 }
