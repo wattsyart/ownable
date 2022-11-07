@@ -28,13 +28,6 @@ namespace ownable.Contracts
             public BigInteger TokenId { get; set; }
         }
 
-        [Function("supportsInterface", "bool")]
-        public class SupportsInterfaceFunction : FunctionMessage
-        {
-            [Parameter("bytes4", "interfaceId")]
-            public byte[] InterfaceId { get; set; } = null!;
-        }
-
         [Event("Transfer")]
         public class Transfer : IEventDTO
         {

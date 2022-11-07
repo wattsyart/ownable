@@ -7,10 +7,10 @@ namespace ownable.Services;
 
 internal sealed class Web3Service
 {
-    private readonly IOptionsSnapshot<Web3Options> _options;
+    private readonly IOptionsMonitor<Web3Options> _options;
     private readonly IEnumerable<IIndexer> _indexers;
     
-    public Web3Service(IOptionsSnapshot<Web3Options> options, IEnumerable<IIndexer> indexers)
+    public Web3Service(IOptionsMonitor<Web3Options> options, IEnumerable<IIndexer> indexers)
     {
         _options = options;
         _indexers = indexers;
@@ -18,7 +18,7 @@ internal sealed class Web3Service
 
     public async Task IndexAddressAsync(string address)
     {
-        var uri = new Uri(_options.Value.RpcUrl!);
+        var uri = new Uri(_options.CurrentValue.RpcUrl!);
         var client = new RpcClient(uri);
         var web3 = new Web3(client);
 

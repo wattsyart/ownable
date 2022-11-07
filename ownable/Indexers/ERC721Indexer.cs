@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Web3;
 using ownable.Contracts;
@@ -9,7 +8,7 @@ namespace ownable.Indexers;
 
 internal sealed class ERC721Indexer : IIndexer
 {
-    private static readonly byte[] Erc721InterfaceId = "0x80ac58cd".HexToByteArray();
+    private static readonly byte[] InterfaceId = "0x80ac58cd".HexToByteArray();
 
     private readonly Store _store;
     private readonly IEnumerable<IKnownContracts> _knownContracts;
@@ -47,15 +46,17 @@ internal sealed class ERC721Indexer : IIndexer
             return;
         }
 
-        var supportsInterfaceQuery = web3.Eth.GetContractQueryHandler<ERC721.SupportsInterfaceFunction>();
+        var supportsInterfaceQuery = web3.Eth.GetContractQueryHandler<ERC165.SupportsInterfaceFunction>();
         var supportsInterface = await supportsInterfaceQuery.QueryAsync<bool>(contractAddress,
-            new ERC721.SupportsInterfaceFunction {InterfaceId = Erc721InterfaceId});
+            new ERC165.SupportsInterfaceFunction {InterfaceId = InterfaceId});
 
         if (supportsInterface)
         {
-            var contract = new Contract();
-            contract.Address = contractAddress;
-            contract.Type = "ERC721";
+            var contract = new Contract
+            {
+                Address = contractAddress,
+                Type = "ERC721"
+            };
 
             try
             {

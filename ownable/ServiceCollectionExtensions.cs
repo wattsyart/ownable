@@ -12,10 +12,12 @@ namespace ownable
         public static IServiceCollection AddCoreServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddSingleton<Store>();
-            services.AddScoped<Web3Service>();
+            services.AddSingleton<Web3Service>();
 
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IKnownContracts, EnsKnownContracts>());
-            services.TryAddEnumerable(ServiceDescriptor.Scoped<IIndexer, ERC721Indexer>());
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IKnownContracts, KnownContracts>());
+
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IIndexer, ERC721Indexer>());
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IIndexer, ERC1155Indexer>());
 
             services.Configure<Web3Options>(configuration.GetSection("Web3"));
             return services;
