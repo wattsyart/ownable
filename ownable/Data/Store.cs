@@ -1,12 +1,10 @@
 ﻿using System.Diagnostics;
-using System.Linq.Expressions;
 using System.Numerics;
 using LightningDB;
 using System.Text;
 using ownable.Models;
 using ownable.Models.Indexed;
 using ownable.Serialization;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace ownable.Data;
 
@@ -15,6 +13,8 @@ public class Store : IDisposable
     private readonly LightningEnvironment _env;
     private readonly TypeRegistry _types;
     private readonly Dictionary<Type, Func<string, object>> _stringToObject;
+
+    public bool UseGzip { get; set; }
 
     // ReSharper disable once UnusedMember.Global (Reflection)
     public Store() : this("store") { }
@@ -147,7 +147,7 @@ public class Store : IDisposable
         using var db = tx.OpenDatabase(configuration: new DatabaseConfiguration { Flags = DatabaseOpenFlags.Create });
 
         using var ms = new MemoryStream();
-        indexable.WriteToStream(ms);
+        indexable.WriteToStream(ms, UseGzip);
 
         var key = indexable.Id.ToByteArray();
 
@@ -242,7 +242,7 @@ public class Store : IDisposable
         using var ms = new MemoryStream(buffer);
         
         var deserialized = new T();
-        deserialized.ReadFromStream(ms);
+        deserialized.ReadFromStream(ms, UseGzip);
         return deserialized;
     }
 
