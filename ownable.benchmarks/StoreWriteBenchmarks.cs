@@ -5,30 +5,28 @@ using ownable.Models.Indexed;
 namespace ownable.benchmarks;
 
 [MemoryDiagnoser]
-public class StoreBenchmarks
+public class StoreWriteBenchmarks
 {
     private Store _store = null!;
-    private readonly List<Indexable> _items = new();
+    private readonly List<Contract> _items = new();
 
     [Params(50, 100, 1000)]
     public int Count { get; set; }
 
-    [GlobalSetup]
-    public void GlobalSetup()
-    {
-        _store = new Store($"benchmark-{Guid.NewGuid()}");
-    }
-
     [IterationSetup]
     public void IterationSetup()
     {
+        _store = new Store($"benchmark-{Guid.NewGuid()}");
         _items.Clear();
         for (var i = 0; i < Count; i++)
-            _items.Add(GetContract());
+        {
+            var item = GetContract();
+            _items.Add(item);
+        }
     }
 
-    [GlobalCleanup]
-    public void GlobalCleanup()
+    [IterationCleanup]
+    public void IterationCleanup()
     {
         _store.Dispose();
     }
@@ -39,7 +37,7 @@ public class StoreBenchmarks
         foreach(var item in _items)
             _store.Append(item);
     }
-
+    
     public static Contract GetContract()
     {
         var contract = new Contract
