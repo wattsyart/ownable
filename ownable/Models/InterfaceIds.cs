@@ -1,6 +1,6 @@
 ﻿using Nethereum.Hex.HexConvertors.Extensions;
 
-namespace ownable.Indexers
+namespace ownable.Models
 {
     internal static class InterfaceIds
     {

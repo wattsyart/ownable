@@ -108,22 +108,24 @@ internal sealed class ERC1155Indexer : IIndexer
                     var tokenUriQuery = web3.Eth.GetContractQueryHandler<ERC1155.URIFunction>();
                     var tokenUri = await tokenUriQuery.QueryAsync<string>(contractAddress, new ERC1155.URIFunction { TokenId = tokenId });
 
-
+                    var foundProcessor = false;
                     JsonTokenMetadata? metadata = null;
                     foreach (var processor in _metadataProcessors)
                     {
                         if (!processor.CanProcess(tokenUri))
                             continue;
 
+                        foundProcessor = true;
                         metadata = await processor.ProcessAsync(tokenUri, cancellationToken);
+
                         if (metadata == null)
                             _logger.LogWarning("Processor {ProcessorName} failed to process metadata, when it reported it was capable", processor.GetType().Name);
                     }
 
                     if (metadata != null)
-                    {
                         await _metadataIndexer.IndexAsync(metadata, contractAddress, tokenId, cancellationToken);
-                    }
+                    else if (!foundProcessor)
+                        _logger.LogWarning("No metadata processor found for {Uri}", tokenUri);
                 }
                 catch (Exception e)
                 {
