@@ -2,6 +2,7 @@
 using Nethereum.JsonRpc.Client;
 using Nethereum.Web3;
 using ownable.Indexers;
+using ownable.Models;
 
 namespace ownable.Services;
 
@@ -23,6 +24,6 @@ internal sealed class Web3Service
         var web3 = new Web3(client);
 
         foreach (var indexer in _indexers)
-            await indexer.IndexAddressAsync(web3, address, cancellationToken);
+            await indexer.IndexAsync(web3, address, cancellationToken);
     }
 }

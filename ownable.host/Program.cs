@@ -3,7 +3,7 @@ using ownable.host.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpClient();
-builder.Services.AddCoreServices(builder.Configuration);
+builder.Services.AddIndexingServices(builder.Configuration);
 
 IConfiguration configuration = builder.Configuration;
 

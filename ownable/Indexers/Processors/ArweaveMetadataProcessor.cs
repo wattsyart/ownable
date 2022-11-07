@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using ownable.Models;
 
-namespace ownable.Indexers.Metadata;
+namespace ownable.Indexers.Processors;
 
 public class ArweaveMetadataProcessor : IMetadataProcessor
 {

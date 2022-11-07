@@ -351,3 +351,6 @@ MigrationBackup/
 
 # LMDB store
 /ownable.host/store/
+
+# Image cache
+/ownable.host/images/

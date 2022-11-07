@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using Nethereum.Web3;
 using ownable.Contracts;
-using ownable.Indexers.Metadata;
 using ownable.Models;
 
 namespace ownable.Indexers;
@@ -12,22 +11,22 @@ internal sealed class ERC721Indexer : IIndexer
     private readonly Store _store;
     private readonly IEnumerable<IKnownContracts> _knownContracts;
     private readonly IEnumerable<IMetadataProcessor> _metadataProcessors;
-    private readonly IEnumerable<IMetadataIndexer> _metadataIndexers;
+    private readonly MetadataIndexer _metadataIndexer;
     private readonly ILogger<ERC721Indexer> _logger;
 
-    public ERC721Indexer(Store store, IEnumerable<IKnownContracts> knownContracts, IEnumerable<IMetadataProcessor> metadataProcessors, IEnumerable<IMetadataIndexer> metadataIndexers,  ILogger<ERC721Indexer> logger)
+    public ERC721Indexer(Store store, IEnumerable<IKnownContracts> knownContracts, IEnumerable<IMetadataProcessor> metadataProcessors, MetadataIndexer metadataIndexer,  ILogger<ERC721Indexer> logger)
     {
         _store = store;
         _knownContracts = knownContracts;
         _metadataProcessors = metadataProcessors;
-        _metadataIndexers = metadataIndexers;
+        _metadataIndexer = metadataIndexer;
         _logger = logger;
     }
 
-    public async Task IndexAddressAsync(IWeb3 web3, string address, CancellationToken cancellationToken)
+    public async Task IndexAsync(IWeb3 web3, string rootAddress, CancellationToken cancellationToken)
     {
         var @event = web3.Eth.GetEvent<ERC721.Transfer>();
-        var receivedByAddress = @event.CreateFilterInput(null, new object[] { address });
+        var receivedByAddress = @event.CreateFilterInput(null, new object[] { rootAddress });
         var changes = await @event.GetAllChangesAsync(receivedByAddress);
 
         foreach (var change in changes)
@@ -101,23 +100,21 @@ internal sealed class ERC721Indexer : IIndexer
                     var tokenUriQuery = web3.Eth.GetContractQueryHandler< ERC721.TokenURIFunction>();
                     var tokenUri = await tokenUriQuery.QueryAsync<string>(contractAddress, new ERC721.TokenURIFunction { TokenId = tokenId });
 
+                    JsonTokenMetadata? metadata = null;
                     foreach (var processor in _metadataProcessors)
                     {
                         if (!processor.CanProcess(tokenUri))
                             continue;
-
-                        var metadata = await processor.ProcessAsync(tokenUri, cancellationToken);
+                        metadata = await processor.ProcessAsync(tokenUri, cancellationToken);
                         if (metadata == null)
                         {
                             _logger.LogWarning("Processor {ProcessorName} failed to process metadata, when it reported it was capable", processor.GetType().Name);
                         }
-                        else
-                        {
-                            foreach (var indexer in _metadataIndexers)
-                                await indexer.Index(metadata);
+                    }
 
-                            break;
-                        }
+                    if (metadata != null)
+                    {
+                        await _metadataIndexer.IndexAsync(metadata, contractAddress, tokenId, cancellationToken);
                     }
                 }
                 catch (Exception e)

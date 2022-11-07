@@ -1,6 +1,4 @@
-﻿using ownable.Models;
-
-namespace ownable.Indexers.Metadata;
+﻿namespace ownable.Models;
 
 public interface IMetadataProcessor
 {
