@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Nethereum.ABI.FunctionEncoding.Attributes;
-using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Web3;
 using ownable.Contracts;
 using ownable.Models;
@@ -54,7 +53,9 @@ namespace ownable.Indexers
 
             var supportsInterfaceQuery = web3.Eth.GetContractQueryHandler<ERC165.SupportsInterfaceFunction>();
             var supportsErc1155 = await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction { InterfaceId = InterfaceIds.ERC1155 });
-            var supportsMetadata = await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction {InterfaceId = InterfaceIds.ERC1155Metadata });
+
+            // IMPORTANT: ERC1155Metadata only specifies uri(uint256), not name or symbol!
+            // var supportsMetadata = await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction {InterfaceId = InterfaceIds.ERC1155Metadata });
 
             if (supportsErc1155)
             {
@@ -64,7 +65,7 @@ namespace ownable.Indexers
                     Type = "ERC1155"
                 };
 
-                var supportsName = supportsMetadata || await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction { InterfaceId = InterfaceIds.Name });
+                var supportsName = await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction { InterfaceId = InterfaceIds.Name });
                 if (supportsName)
                 {
                     try
@@ -79,7 +80,7 @@ namespace ownable.Indexers
                     }
                 }
 
-                var supportsSymbol = supportsMetadata || await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction { InterfaceId = InterfaceIds.Symbol });
+                var supportsSymbol = await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction { InterfaceId = InterfaceIds.Symbol });
                 if (supportsSymbol)
                 {
                     try
