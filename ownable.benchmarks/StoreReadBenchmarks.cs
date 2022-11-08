@@ -24,7 +24,7 @@ public class StoreReadBenchmarks
         {
             var item = GetContract();
             _items.Add(item);
-            _keys.Add(KeyBuilder.LookupKey(typeof(Contract), nameof(Contract.Name), item.Name).ToArray());
+            _keys.Add(KeyBuilder.KeyLookup(typeof(Contract), nameof(Contract.Name), item.Name).ToArray());
             _store.Append(item, CancellationToken.None);
         }
     }

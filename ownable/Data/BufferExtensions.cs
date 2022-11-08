@@ -8,15 +8,6 @@ namespace ownable.Data
         public static byte[] Concat(this byte[] left, byte[] right) => Concat(left.AsSpan(), right);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static byte[] Concat(this byte[] left, ReadOnlySpan<byte> right) => Concat(left.AsSpan(), right);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static byte[] Concat(this byte[] left, byte right) => Concat(left.AsSpan(), new[] { right });
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static byte[] Concat(this byte[] left, char right) => left.Concat((byte) right);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte[] Concat(this ReadOnlySpan<byte> left, ReadOnlySpan<byte> right) => left.Concat<byte>(right);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

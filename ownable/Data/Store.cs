@@ -8,6 +8,10 @@ using Microsoft.Extensions.Logging;
 
 namespace ownable.Data;
 
+#if PLAINSTORE
+using System.Text;
+#endif
+
 public class Store : IDisposable
 {
     private readonly ILogger<Store> _logger;
@@ -34,7 +38,8 @@ public class Store : IDisposable
 
     private readonly Dictionary<Type, PropertyInfo[]> _cachedProperties = new();
 
-    public void Append<T>(T indexable, CancellationToken cancellationToken) where T : IIndexable
+    public void Append<T>(T indexable, CancellationToken cancellationToken) where T : IIndexable => Append(typeof(T), indexable, cancellationToken);
+    public void Append(Type type, IIndexable indexable, CancellationToken cancellationToken)
     {
         if (indexable == null) throw new ArgumentNullException(nameof(indexable));
 
@@ -44,23 +49,25 @@ public class Store : IDisposable
         using var ms = new MemoryStream();
         indexable.WriteToStream(ms, UseGzip);
 
-        var type = typeof(T);
-
         // GUID
+#if PLAINSTORE
+        var key = Encoding.UTF8.GetBytes(indexable.Id.ToString());
+#else
         var key = indexable.Id.ToByteArray();
+#endif
 
         // GUID => Buffer
         Index(db, tx, key, ms.ToArray());
 
-        // Type => GUID
+        // ID => GUID
         Index(db, tx, KeyBuilder.IndexKey(type, nameof(Indexable.Id), indexable.Id.ToString(), key), key);
 
         if (!_cachedProperties.TryGetValue(type, out var properties))
-            _cachedProperties.Add(type, properties = 
+            _cachedProperties.Add(type, properties =
                 type.GetProperties()
-                .Where(x => x.CanRead && x.HasAttribute<IndexedAttribute>())
-                .ToArray()
-                );
+                    .Where(x => x.CanRead && x.HasAttribute<IndexedAttribute>())
+                    .ToArray()
+            );
 
         foreach (var property in properties)
             Index(db, tx, KeyBuilder.IndexKey(property, indexable, key), key);
@@ -83,7 +90,7 @@ public class Store : IDisposable
     {
         var lookupKey = string.IsNullOrWhiteSpace(value)
             ? KeyBuilder.KeyPrefix(typeof(T), key)
-            : KeyBuilder.LookupKey(typeof(T), key, value);
+            : KeyBuilder.KeyLookup(typeof(T), key, value);
 
         return FindByKey<T>(lookupKey, cancellationToken);
     }
@@ -125,9 +132,14 @@ public class Store : IDisposable
         return entries;
     }
 
+    private static readonly Dictionary<Type, byte[]> IdKeyCache = new();
+
     public IEnumerable<T> Get<T>(CancellationToken cancellationToken) where T : IIndexable, new()
     {
-        return FindByKey<T>(KeyBuilder.KeyPrefix(typeof(T), nameof(Indexable.Id)), cancellationToken);
+        if(!IdKeyCache.TryGetValue(typeof(T), out var idKey))
+            IdKeyCache.Add(typeof(T), idKey = KeyBuilder.KeyPrefix(typeof(T), nameof(Indexable.Id)).ToArray());
+
+        return FindByKey<T>(idKey, cancellationToken);
     }
 
     public T? GetById<T>(Guid id, CancellationToken cancellationToken) where T : IIndexable, new() => GetById<T>(id.ToByteArray(), cancellationToken);

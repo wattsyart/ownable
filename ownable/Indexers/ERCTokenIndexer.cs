@@ -57,7 +57,7 @@ internal abstract class ERCTokenIndexer : IIndexer
 
             _store.Append(received, cancellationToken);
 
-            // await IndexContractAddress(web3, contractAddress, tokenId, blockNumber, cancellationToken);
+            await IndexContractAddress(web3, contractAddress, tokenId, blockNumber, cancellationToken);
         }
 
         return @event;
@@ -88,7 +88,7 @@ internal abstract class ERCTokenIndexer : IIndexer
 
             _store.Append(sent, cancellationToken);
 
-            // await IndexContractAddress(web3, contractAddress, tokenId, blockNumber, cancellationToken);
+            await IndexContractAddress(web3, contractAddress, tokenId, blockNumber, cancellationToken);
         }
     }
 
@@ -122,7 +122,7 @@ internal abstract class ERCTokenIndexer : IIndexer
         return features;
     }
 
-    protected async Task<string?> TryGetNameAsync<TNameFunction>(IWeb3 web3, string contractAddress, ContractFeatures features) 
+    protected async Task<string?> TryGetNameAsync<TNameFunction>(IWeb3 web3, string contractAddress, ContractFeatures features, BlockParameter atBlock) 
         where TNameFunction : FunctionMessage, IParameterlessStringFunction, new()
     {
         if (features.SupportsName())
@@ -135,14 +135,14 @@ internal abstract class ERCTokenIndexer : IIndexer
             }
             catch (Exception e)
             {
-                _logger.LogWarning(e, "Contract Address {ContractAddress} failed to fetch token name", contractAddress);
+                _logger.LogWarning(e, "Contract Address {ContractAddress} at block {BlockNumber} failed to fetch token name", contractAddress, atBlock);
             }
         }
 
         return null;
     }
 
-    protected async Task<string?> TryGetSymbolAsync<TSymbolFunction>(IWeb3 web3, string contractAddress, ContractFeatures features)
+    protected async Task<string?> TryGetSymbolAsync<TSymbolFunction>(IWeb3 web3, string contractAddress, ContractFeatures features, BlockParameter atBlock)
         where TSymbolFunction : FunctionMessage, IParameterlessStringFunction, new()
     {
         if (features.SupportsSymbol())
@@ -155,14 +155,14 @@ internal abstract class ERCTokenIndexer : IIndexer
             }
             catch (Exception e)
             {
-                _logger.LogWarning(e, "Contract Address {ContractAddress} failed to fetch token symbol", contractAddress);
+                _logger.LogWarning(e, "Contract Address {ContractAddress} at block {BlockNumber} failed to fetch token symbol", contractAddress, atBlock);
             }
         }
 
         return null;
     }
 
-    protected async Task<string?> TryGetTokenUriAsync<TTokenUriFunction>(IWeb3 web3, string contractAddress, BigInteger tokenId, ContractFeatures features)
+    protected async Task<string?> TryGetTokenUriAsync<TTokenUriFunction>(IWeb3 web3, string contractAddress, BigInteger tokenId, ContractFeatures features, BlockParameter atBlock)
         where TTokenUriFunction : FunctionMessage, ITokenUriFunction, new()
     {
         if (features.SupportsUri())
@@ -175,7 +175,7 @@ internal abstract class ERCTokenIndexer : IIndexer
             }
             catch (Exception e)
             {
-                _logger.LogWarning(e, "Contract Address {ContractAddress} failed to fetch token URI", contractAddress);
+                _logger.LogWarning(e, "Contract Address {ContractAddress} at block {BlockNumber} failed to fetch token URI", contractAddress, atBlock);
             }
         }
 

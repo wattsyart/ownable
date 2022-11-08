@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using Microsoft.Extensions.Logging;
+using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
 using ownable.Contracts;
@@ -34,6 +35,8 @@ internal sealed class ERC721Indexer : ERCTokenIndexer
 
     protected override async Task IndexContractAddress(IWeb3 web3, string contractAddress, BigInteger tokenId, BigInteger blockNumber, CancellationToken cancellationToken)
     {
+        var atBlock = blockNumber.ToBlockParameter();
+
         foreach (var knownContracts in _knownContracts)
         {
             if (!knownContracts.TryGetContract(contractAddress, out var contract) || contract == null)
@@ -66,13 +69,13 @@ internal sealed class ERC721Indexer : ERCTokenIndexer
                 Address = contractAddress,
                 Type = "ERC721",
                 BlockNumber = blockNumber.ToString(),
-                Name = await TryGetNameAsync<ERC721.NameFunction>(web3, contractAddress, features),
-                Symbol = await TryGetSymbolAsync<ERC721.SymbolFunction>(web3, contractAddress, features)
+                Name = await TryGetNameAsync<ERC721.NameFunction>(web3, contractAddress, features, atBlock),
+                Symbol = await TryGetSymbolAsync<ERC721.SymbolFunction>(web3, contractAddress, features, atBlock)
             };
 
             try
             {
-                var tokenUri = await TryGetTokenUriAsync<ERC721.TokenURIFunction>(web3, contractAddress, tokenId, features);
+                var tokenUri = await TryGetTokenUriAsync<ERC721.TokenURIFunction>(web3, contractAddress, tokenId, features, atBlock);
                 if (tokenUri != null)
                 {
                     var foundProcessor = false;

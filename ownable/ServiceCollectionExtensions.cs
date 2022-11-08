@@ -23,13 +23,13 @@ public static class ServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IIndexer, ERC721Indexer>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IIndexer, ERC1155Indexer>());
 
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, HttpMetadataProcessor>());
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, DataUriMetadataProcessor>());
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, IpfsMetadataProcessor>());
+        //services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, HttpMetadataProcessor>());
+        //services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, DataUriMetadataProcessor>());
+        //services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, IpfsMetadataProcessor>());
 
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataImageProcessor, HttpImageProcessor>());
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataImageProcessor, DataUriImageProcessor>());
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataImageProcessor, IpfsImageProcessor>());
+        //services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataImageProcessor, HttpImageProcessor>());
+        //services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataImageProcessor, DataUriImageProcessor>());
+        //services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataImageProcessor, IpfsImageProcessor>());
 
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataImageHandler, FileImageHandler>());
 

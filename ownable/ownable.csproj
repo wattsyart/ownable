@@ -5,6 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+  
+  <!--<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>$(DefineConstants)TRACE;PLAINSTORE</DefineConstants>
+  </PropertyGroup>-->
 
   <ItemGroup>
     <PackageReference Include="Ipfs.Http.Client" Version="0.33.0" />

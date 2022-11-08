@@ -22,7 +22,7 @@ namespace ownable.tests
 
                 added.Add(contract);
                 store.Append(contract, CancellationToken.None);
-                keys.Add(KeyBuilder.LookupKey(typeof(Contract), nameof(Contract.Name), contract.Name).ToArray());
+                keys.Add(KeyBuilder.KeyLookup(typeof(Contract), nameof(Contract.Name), contract.Name).ToArray());
             }
 
             foreach (var key in keys)
@@ -39,9 +39,7 @@ namespace ownable.tests
             all = all.OrderBy(x => x.Id).ToList();
 
             for (var i = 0; i < all.Count; i++)
-            {
                 AssertEqual(added[i], all[i]);
-            }
         }
 
         [Fact]
