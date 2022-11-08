@@ -8,9 +8,6 @@ public abstract class Transferred : Indexable
     public string? Address { get; set; }
 
     [Indexed]
-    public string? BlockNumber { get; set; }
-
-    [Indexed]
     public string? ContractAddress { get; set; }
 
     [Indexed]
@@ -20,7 +17,7 @@ public abstract class Transferred : Indexable
     {
         context.bw.Write(Id);
         context.bw.WriteNullableString(Address);
-        context.bw.WriteNullableString(BlockNumber);
+        context.bw.Write(BlockNumber);
         context.bw.WriteNullableString(ContractAddress);
         context.bw.WriteNullableString(TokenId);
     }
@@ -29,7 +26,7 @@ public abstract class Transferred : Indexable
     {
         Id = context.br.ReadGuid();
         Address = context.br.ReadNullableString();
-        BlockNumber = context.br.ReadNullableString();
+        BlockNumber = context.br.ReadBigInteger();
         ContractAddress = context.br.ReadNullableString();
         TokenId = context.br.ReadNullableString();
     }

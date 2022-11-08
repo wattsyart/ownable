@@ -45,7 +45,7 @@ public class StoreWriteBenchmarks
         var contract = new Contract
         {
             Address = "0xb47e3cd837ddf8e4c57f05d70ab865de6e193bbb",
-            BlockNumber = "12345",
+            BlockNumber = 12345,
             Name = "My NFT",
             Symbol = "NFT",
             Type = "ERC721"

@@ -41,7 +41,7 @@ internal sealed class ERC721Indexer : ERCTokenIndexer
         {
             if (!knownContracts.TryGetContract(contractAddress, out var contract) || contract == null)
                 continue;
-            contract.BlockNumber = blockNumber.ToString();
+            contract.BlockNumber = blockNumber;
             _store.Append(new Contract
             {
                 Address = contract.Address,
@@ -68,7 +68,7 @@ internal sealed class ERC721Indexer : ERCTokenIndexer
             {
                 Address = contractAddress,
                 Type = "ERC721",
-                BlockNumber = blockNumber.ToString(),
+                BlockNumber = blockNumber,
                 Name = await TryGetNameAsync<ERC721.NameFunction>(web3, contractAddress, features, atBlock),
                 Symbol = await TryGetSymbolAsync<ERC721.SymbolFunction>(web3, contractAddress, features, atBlock)
             };

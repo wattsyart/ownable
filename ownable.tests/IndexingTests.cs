@@ -69,7 +69,7 @@ namespace ownable.tests
                     Assert.Single(contractWithAddress);
                     AssertEqual(contract, contractWithAddress.Single());
 
-                    var contractWithBlockNumber = store.Find<Contract>(nameof(Contract.BlockNumber), contract.BlockNumber, cancellationToken).ToList();
+                    var contractWithBlockNumber = store.Find<Contract>(nameof(Contract.BlockNumber), contract.BlockNumber.ToString(), cancellationToken).ToList();
                     Assert.Single(contractWithBlockNumber);
                     AssertEqual(contract, contractWithBlockNumber.Single());
 

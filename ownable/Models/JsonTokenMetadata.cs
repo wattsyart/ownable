@@ -1,5 +1,5 @@
 ﻿using System.Text.Json.Serialization;
-using ownable.Serialization;
+using ownable.Serialization.Converters;
 
 namespace ownable.Models;
 

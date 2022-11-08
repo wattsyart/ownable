@@ -1,4 +1,6 @@
-﻿namespace ownable.Serialization
+﻿using System.Numerics;
+
+namespace ownable.Serialization
 {
     public static class BinaryExtensions
     {
@@ -27,6 +29,19 @@
         public static string? ReadNullableString(this BinaryReader br)
         {
             return br.ReadBoolean() ? br.ReadString() : null;
+        }
+
+        public static void Write(this BinaryWriter bw, BigInteger value)
+        {
+            var buffer = value.ToByteArray();
+            bw.Write(buffer.Length);
+            bw.Write(buffer);
+        }
+
+        public static BigInteger ReadBigInteger(this BinaryReader br)
+        {
+            var length = br.ReadInt32();
+            return new BigInteger(br.ReadBytes(length));
         }
     }
 }

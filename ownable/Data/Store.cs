@@ -55,7 +55,7 @@ public class Store : IDisposable
 #else
         var key = indexable.Id.ToByteArray();
 #endif
-
+        
         // GUID => Buffer
         Index(db, tx, key, ms.ToArray());
 
@@ -97,6 +97,10 @@ public class Store : IDisposable
 
     public IEnumerable<T> FindByKey<T>(ReadOnlySpan<byte> key, CancellationToken cancellationToken) where T : IIndexable, new()
     {
+#if PLAINSTORE
+        var keyString = Encoding.UTF8.GetString(key);
+#endif
+
         cancellationToken.ThrowIfCancellationRequested();
 
         using var tx = _env.BeginTransaction(TransactionBeginFlags.ReadOnly);
@@ -114,6 +118,11 @@ public class Store : IDisposable
         while (r == MDBResultCode.Success && !cancellationToken.IsCancellationRequested)
         {
             var next = k.AsSpan();
+
+#if PLAINSTORE
+            var nextString = Encoding.UTF8.GetString(next);
+#endif
+
             if (!next.StartsWith(key))
                 break;
 
@@ -142,7 +151,13 @@ public class Store : IDisposable
         return FindByKey<T>(idKey, cancellationToken);
     }
 
-    public T? GetById<T>(Guid id, CancellationToken cancellationToken) where T : IIndexable, new() => GetById<T>(id.ToByteArray(), cancellationToken);
+    public T? GetById<T>(Guid id, CancellationToken cancellationToken) where T : IIndexable, new() => GetById<T>(
+#if PLAINSTORE
+        Encoding.UTF8.GetBytes(id.ToString()),
+#else
+        id.ToByteArray(), 
+#endif
+        cancellationToken);
 
     private T? GetById<T>(ReadOnlySpan<byte> id, CancellationToken cancellationToken) where T : IIndexable, new()
     {

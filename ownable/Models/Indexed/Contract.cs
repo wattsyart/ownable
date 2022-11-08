@@ -9,9 +9,6 @@ public sealed class Contract : Indexable
     public string? Address { get; set; }
 
     [Indexed]
-    public string? BlockNumber { get; set; }
-
-    [Indexed]
     public string? Type { get; set; }
 
     [Indexed]
@@ -24,7 +21,7 @@ public sealed class Contract : Indexable
     {
         context.bw.Write(Id);
         context.bw.WriteNullableString(Address);
-        context.bw.WriteNullableString(BlockNumber);
+        context.bw.Write(BlockNumber);
         context.bw.WriteNullableString(Type);
         context.bw.WriteNullableString(Name);
         context.bw.WriteNullableString(Symbol);
@@ -34,7 +31,7 @@ public sealed class Contract : Indexable
     {
         Id = context.br.ReadGuid();
         Address = context.br.ReadNullableString();
-        BlockNumber = context.br.ReadNullableString();
+        BlockNumber = context.br.ReadBigInteger();
         Type = context.br.ReadNullableString();
         Name = context.br.ReadNullableString();
         Symbol = context.br.ReadNullableString();

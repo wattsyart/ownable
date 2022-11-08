@@ -29,10 +29,11 @@ namespace ownable.Data
        
         public static ReadOnlySpan<byte> IndexKey(PropertyInfo property, object target, byte[] id)
         {
-            var type = property.DeclaringType ?? target.GetType();
+            var type = target.GetType();
             var value = property.GetValue(target);
             value ??= "";
-            return IndexKey(type, property.Name, value.ToString(), id);
+            var valueString = value.ToString();
+            return IndexKey(type, property.Name, valueString, id);
         }
         
         public static ReadOnlySpan<byte> IndexKey(Type type, string key, string? value, byte[] id)

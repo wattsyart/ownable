@@ -2,7 +2,7 @@
 using System.Text.Json.Serialization;
 using ownable.Models;
 
-namespace ownable.Serialization;
+namespace ownable.Serialization.Converters;
 
 /// <summary>
 /// Mitigation for when metadata returns an empty string instead of an empty array or null for attributes.

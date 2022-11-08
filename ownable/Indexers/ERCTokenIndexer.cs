@@ -49,7 +49,7 @@ internal abstract class ERCTokenIndexer : IIndexer
 
             var received = new Received
             {
-                BlockNumber = blockNumber.ToString(),
+                BlockNumber = blockNumber,
                 ContractAddress = contractAddress,
                 Address = change.Event.To,
                 TokenId = new HexBigInteger(tokenId).ToString()
@@ -80,7 +80,7 @@ internal abstract class ERCTokenIndexer : IIndexer
 
             var sent = new Sent
             {
-                BlockNumber = blockNumber.ToString(),
+                BlockNumber = blockNumber,
                 ContractAddress = contractAddress,
                 Address = change.Event.From,
                 TokenId = new HexBigInteger(tokenId).ToString()

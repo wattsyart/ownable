@@ -1,11 +1,18 @@
 ﻿using System.IO.Compression;
+using System.Numerics;
+using System.Text.Json.Serialization;
 using ownable.Serialization;
+using ownable.Serialization.Converters;
 
 namespace ownable.Models.Indexed;
 
 public abstract class Indexable : IIndexable
 {
     public Guid Id { get; set; } = Guid.NewGuid();
+    
+    [Indexed]
+    [JsonConverter(typeof(BigIntegerConverter))]
+    public BigInteger BlockNumber { get; set; }
 
     public abstract void Serialize(IndexSerializeContext context);
     public abstract void Deserialize(IndexDeserializeContext context);
