@@ -29,9 +29,34 @@ namespace ownable.tests
             // calling save, allows mutation, so block number is changed
             store.Save(contract, CancellationToken.None);
             all = store.Get<Contract>(CancellationToken.None).ToList();
+            Assert.Single(all);
             AssertEqual(contract, all.Single());
         }
 
+        [Fact]
+        public void BlockNumberFilter()
+        {
+            var path = $"test-{Guid.NewGuid()}";
+            var store = new Store(path, NullLogger<Store>.Instance);
+
+            var contract = TestFactory.GetContract();
+            contract.Id = Guid.NewGuid();
+            contract.BlockNumber = 1000;
+
+            store.Append(contract, CancellationToken.None);
+
+            contract.Id = Guid.NewGuid();
+            contract.BlockNumber = 1001;
+            store.Append(contract, CancellationToken.None);
+
+            // getting all contracts by this address gives two, because we have two distinct IDs (this should switch to using a composite key including BlockNumber)
+            var contracts = store.Find<Contract>(nameof(Contract.Address), contract.Address, CancellationToken.None).ToList();
+            Assert.Equal(2, contracts.Count);
+
+            // filtering by block number (only blocks > 1000) should produce a single result
+            contracts = store.FindSince<Contract>(nameof(Contract.Address), contract.Address, 1000, CancellationToken.None).ToList();
+            Assert.Single(contracts);
+        }
 
         [Theory]
         [InlineData(1000)]

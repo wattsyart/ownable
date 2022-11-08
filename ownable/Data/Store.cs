@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Numerics;
 using LightningDB;
 using ownable.Models;
 using ownable.Models.Indexed;
@@ -41,16 +42,16 @@ public class Store : IDisposable
     public void Append<T>(T indexable, CancellationToken cancellationToken) where T : IIndexable => Append(typeof(T), indexable, cancellationToken);
     public void Append(Type type, IIndexable indexable, CancellationToken cancellationToken)
     {
-        Set(type, indexable, cancellationToken, PutOptions.NoOverwrite);
+        Put(type, indexable, PutOptions.NoOverwrite, cancellationToken);
     }
 
     public void Save<T>(T indexable, CancellationToken cancellationToken) where T : IIndexable => Save(typeof(T), indexable, cancellationToken);
     public void Save(Type type, IIndexable indexable, CancellationToken cancellationToken)
     {
-        Set(type, indexable, cancellationToken, PutOptions.None);
+        Put(type, indexable, PutOptions.None, cancellationToken);
     }
 
-    private void Set(Type type, IIndexable indexable, CancellationToken cancellationToken, PutOptions options)
+    private void Put(Type type, IIndexable indexable, PutOptions options, CancellationToken cancellationToken)
     {
         if (indexable == null) throw new ArgumentNullException(nameof(indexable));
 
@@ -106,6 +107,15 @@ public class Store : IDisposable
         return FindByKey<T>(lookupKey, cancellationToken);
     }
 
+    public IEnumerable<T> FindSince<T>(string key, string? value, BigInteger blockNumber, CancellationToken cancellationToken) where T : IIndexable, new()
+    {
+        var lookupKey = string.IsNullOrWhiteSpace(value)
+            ? KeyBuilder.KeyPrefix(typeof(T), key)
+            : KeyBuilder.KeyLookup(typeof(T), key, value);
+
+        return FindByKeySince<T>(lookupKey, blockNumber, cancellationToken);
+    }
+
     public IEnumerable<T> FindByKey<T>(ReadOnlySpan<byte> key, CancellationToken cancellationToken) where T : IIndexable, new()
     {
 #if PLAINSTORE
@@ -143,6 +153,53 @@ public class Store : IDisposable
                 break;
 
             entries.Add(entry);
+
+            r = cursor.Next();
+            if (r == MDBResultCode.Success)
+                (r, k, v) = cursor.GetCurrent();
+        }
+
+        return entries;
+    }
+
+    public IEnumerable<T> FindByKeySince<T>(ReadOnlySpan<byte> key, BigInteger blockNumber, CancellationToken cancellationToken) where T : IIndexable, new()
+    {
+#if PLAINSTORE
+        var keyString = Encoding.UTF8.GetString(key);
+#endif
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        using var tx = _env.BeginTransaction(TransactionBeginFlags.ReadOnly);
+        using var db = tx.OpenDatabase(configuration: new DatabaseConfiguration { Flags = DatabaseOpenFlags.None });
+        using var cursor = tx.CreateCursor(db);
+
+        var entries = new List<T>();
+
+        var sr = cursor.SetRange(key);
+        if (sr != MDBResultCode.Success)
+            return entries;
+
+        var (r, k, v) = cursor.GetCurrent();
+
+        while (r == MDBResultCode.Success && !cancellationToken.IsCancellationRequested)
+        {
+            var next = k.AsSpan();
+
+#if PLAINSTORE
+            var nextString = Encoding.UTF8.GetString(next);
+#endif
+
+            if (!next.StartsWith(key))
+                break;
+
+            var index = v.AsSpan();
+            var entry = GetById<T>(index, cancellationToken);
+            if (entry == null)
+                break;
+
+            if(entry.BlockNumber > blockNumber)
+                entries.Add(entry);
 
             r = cursor.Next();
             if (r == MDBResultCode.Success)
