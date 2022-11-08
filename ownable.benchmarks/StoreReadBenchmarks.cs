@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using Microsoft.Extensions.Logging.Abstractions;
 using ownable.Data;
 using ownable.Models.Indexed;
 
@@ -18,13 +19,13 @@ public class StoreReadBenchmarks
     public void IterationSetup()
     {
         _store?.Dispose();
-        _store = new Store($"benchmark-{Guid.NewGuid()}");
+        _store = new Store($"benchmark-{Guid.NewGuid()}", NullLogger<Store>.Instance);
         for (var i = 0; i < Count; i++)
         {
             var item = GetContract();
             _items.Add(item);
-            _keys.Add(KeyBuilder.LookupKey(typeof(Contract), nameof(Contract.Name), item.Name));
-            _store.Append(item);
+            _keys.Add(KeyBuilder.LookupKey(typeof(Contract), nameof(Contract.Name), item.Name).ToArray());
+            _store.Append(item, CancellationToken.None);
         }
     }
 

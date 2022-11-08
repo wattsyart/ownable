@@ -5,7 +5,7 @@ namespace ownable.Models.Indexed;
 
 public abstract class Indexable : IIndexable
 {
-    [Key] public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; } = Guid.NewGuid();
 
     public abstract void Serialize(IndexSerializeContext context);
     public abstract void Deserialize(IndexDeserializeContext context);

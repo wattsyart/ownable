@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using Microsoft.Extensions.Logging.Abstractions;
 using ownable.Data;
 using ownable.Models.Indexed;
 
@@ -17,7 +18,7 @@ public class StoreWriteBenchmarks
     public void IterationSetup()
     {
         _store.Dispose();
-        _store = new Store($"benchmark-{Guid.NewGuid()}");
+        _store = new Store($"benchmark-{Guid.NewGuid()}", NullLogger<Store>.Instance);
         _items.Clear();
         for (var i = 0; i < Count; i++)
         {
@@ -36,7 +37,7 @@ public class StoreWriteBenchmarks
     public void Append()
     {
         foreach(var item in _items)
-            _store.Append(item);
+            _store.Append(item, CancellationToken.None);
     }
     
     public static Contract GetContract()

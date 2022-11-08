@@ -55,7 +55,7 @@ internal abstract class ERCTokenIndexer : IIndexer
                 TokenId = new HexBigInteger(tokenId).ToString()
             };
 
-            _store.Save(received);
+            _store.Append(received, cancellationToken);
 
             // await IndexContractAddress(web3, contractAddress, tokenId, blockNumber, cancellationToken);
         }
@@ -86,7 +86,7 @@ internal abstract class ERCTokenIndexer : IIndexer
                 TokenId = new HexBigInteger(tokenId).ToString()
             };
 
-            _store.Save(sent);
+            _store.Append(sent, cancellationToken);
 
             // await IndexContractAddress(web3, contractAddress, tokenId, blockNumber, cancellationToken);
         }

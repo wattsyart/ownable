@@ -1,23 +1,28 @@
-﻿using ownable.Data;
+﻿using Microsoft.Extensions.Logging.Abstractions;
+using ownable.Data;
 using ownable.Models.Indexed;
 
 namespace ownable.tests
 {
     public class IndexingTests
     {
-        [Fact]
-        public void LookupScalability()
+        [Theory]
+        [InlineData(1000)]
+        public void LookupScalability(int records)
         {
             var path = $"test-{Guid.NewGuid()}";
-            var store = new Store(path);
+            var store = new Store(path, NullLogger<Store>.Instance);
 
+            var added = new List<Contract>();
             var keys = new List<byte[]>();
-            for (var i = 0; i < 1000; i++)
+            for (var i = 0; i < records; i++)
             {
                 var contract = TestFactory.GetContract();
                 contract.Name = Guid.NewGuid().ToString();
-                store.Append(contract);
-                keys.Add(KeyBuilder.LookupKey(typeof(Contract), nameof(Contract.Name), contract.Name));
+
+                added.Add(contract);
+                store.Append(contract, CancellationToken.None);
+                keys.Add(KeyBuilder.LookupKey(typeof(Contract), nameof(Contract.Name), contract.Name).ToArray());
             }
 
             foreach (var key in keys)
@@ -26,20 +31,31 @@ namespace ownable.tests
                 Assert.NotNull(results);
                 Assert.Single(results);
             }
+
+            var all = store.Get<Contract>(CancellationToken.None).ToList();
+            Assert.Equal(records, all.Count);
+
+            added = added.OrderBy(x => x.Id).ToList();
+            all = all.OrderBy(x => x.Id).ToList();
+
+            for (var i = 0; i < all.Count; i++)
+            {
+                AssertEqual(added[i], all[i]);
+            }
         }
 
         [Fact]
         public void AppendObjectAndLookupWithIndexedKeys()
         {
             var path = $"test-{Guid.NewGuid()}";
-            var store = new Store(path);
+            var store = new Store(path, NullLogger<Store>.Instance);
 
             var startLength = store.GetEntriesCount();
 
             try
             {
                 var contract = TestFactory.GetContract();
-                store.Append(contract);
+                store.Append(contract, CancellationToken.None);
 
                 var indexLength = store.GetEntriesCount();
                 Assert.True(startLength < indexLength);
@@ -77,34 +93,7 @@ namespace ownable.tests
                 store.Dispose();
             }
         }
-
-        [Fact]
-        public void LegacyIndexAndRetrieveObjects()
-        {
-            var store = new Store($"test-{Guid.NewGuid()}");
-            var startLength = store.GetEntriesCount();
-
-            try
-            {
-                var contract = TestFactory.GetContract();
-                store.Save(contract);
-
-                var indexLength = store.GetEntriesCount();
-                Assert.True(startLength < indexLength);
-
-                var contracts = store.Get<Contract>(CancellationToken.None).ToList();
-                Assert.NotNull(contracts);
-                Assert.Single(contracts);
-                
-                var retrieved = contracts.Single();
-                AssertEqual(contract, retrieved);
-            }
-            finally
-            {
-                store.Dispose();
-            }
-        }
-
+        
         private static void AssertEqual(Contract expected, Contract actual)
         {
             Assert.Equal(expected.Address, actual.Address);

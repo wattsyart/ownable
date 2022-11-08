@@ -1,5 +1,4 @@
-﻿using ownable.Models;
-using System.Reflection;
+﻿using System.Reflection;
 using WyHash;
 
 namespace ownable.Data
@@ -9,14 +8,14 @@ namespace ownable.Data
         private static readonly Dictionary<Type, byte[]> IdPrefixes = new();
         private static readonly Dictionary<(Type, string), byte[]> KeyPrefixes = new();
 
-        public static byte[] IdPrefix(Type type)
+        public static ReadOnlySpan<byte> IdPrefix(Type type)
         {
             if (!IdPrefixes.TryGetValue(type, out var prefix))
                 IdPrefixes.Add(type, prefix = IdTag(type).ToArray());
             return prefix;
         }
 
-        public static byte[] KeyPrefix(Type type, string key)
+        public static ReadOnlySpan<byte> KeyPrefix(Type type, string key)
         {
             key = key.ToUpperInvariant();
             if (!KeyPrefixes.TryGetValue((type, key), out var prefix))
@@ -24,14 +23,14 @@ namespace ownable.Data
             return prefix;
         }
        
-        public static byte[] IndexKey(PropertyInfo property, object target, byte[] id)
+        public static ReadOnlySpan<byte> IndexKey(PropertyInfo property, object target, byte[] id)
         {
             var type = property.DeclaringType ?? target.GetType();
             var value = property.GetValue(target);
             return IndexKey(type, property.Name, value!.ToString(), id);
         }
-
-        public static byte[] IndexKey(Type type, string key, string? value, byte[] id)
+        
+        public static ReadOnlySpan<byte> IndexKey(Type type, string key, string? value, byte[] id)
         {
             var indexKey = LookupKey(type, key, value)
                 .Concat(IdPrefix(type))
@@ -40,7 +39,7 @@ namespace ownable.Data
             return indexKey;
         }
 
-        public static byte[] LookupKey(Type type, string key, string? value)
+        public static ReadOnlySpan<byte> LookupKey(Type type, string key, string? value)
         {
             var lookupKey = KeyPrefix(type, key)
                 .Concat(ValueTag(value))

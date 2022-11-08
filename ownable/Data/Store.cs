@@ -1,148 +1,40 @@
 ﻿using System.Diagnostics;
-using System.Numerics;
 using LightningDB;
-using System.Text;
 using ownable.Models;
 using ownable.Models.Indexed;
 using ownable.Serialization;
 using System.Reflection;
+using Microsoft.Extensions.Logging;
 
 namespace ownable.Data;
 
 public class Store : IDisposable
 {
+    private readonly ILogger<Store> _logger;
     private readonly LightningEnvironment _env;
-    private readonly TypeRegistry _types;
-    private readonly Dictionary<Type, Func<string, object>> _stringToObject;
-
+    
     public bool UseGzip { get; set; }
 
     // ReSharper disable once UnusedMember.Global (Reflection)
-    public Store() : this("store") { }
+    public Store(ILogger<Store> logger) : this("store", logger) { }
 
-    public Store(string path)
+    public Store(string path, ILogger<Store> logger)
     {
+        _logger = logger;
         Path = path;
 
         _env = new LightningEnvironment(path, new EnvironmentConfiguration { MapSize = 10_485_760 });
         _env.MaxDatabases = 1;
         _env.Open();
-
-        _types = new TypeRegistry();
-        _types.Register<Contract>();
-        _types.Register<Received>();
-        _types.Register<Sent>();
-
-        _stringToObject = new Dictionary<Type, Func<string, object>>
-        {
-            {typeof(string), s => s},
-            {typeof(Guid), s => Guid.TryParse(s, out var value) ? value : Guid.Empty},
-            {typeof(ulong), s => ulong.TryParse(s, out var value) ? value : 0UL},
-            {typeof(BigInteger), s => BigInteger.TryParse(s, out var value) ? value : BigInteger.Zero}
-        };
     }
 
     public string Path { get; set; }
-
-    public void Save<T>(T instance)
-    {
-        if (instance == null) throw new ArgumentNullException(nameof(instance));
-
-        using var tx = _env.BeginTransaction();
-        using var db = tx.OpenDatabase(configuration: new DatabaseConfiguration { Flags = DatabaseOpenFlags.Create });
-
-        tx.Put(db, _types.GetKey(instance), _types.GetKeyValue(instance), PutOptions.NoOverwrite);
-
-        foreach (var indexed in _types.GetIndexed(instance))
-        {
-            var (key, value) = indexed(instance);
-            tx.Put(db, key, value);
-        }
-
-        tx.Commit();
-    }
-
-    public IEnumerable<T> Get<T>(CancellationToken cancellationToken) where T : new()
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        using var tx = _env.BeginTransaction(TransactionBeginFlags.ReadOnly);
-        using var db = tx.OpenDatabase(configuration: new DatabaseConfiguration { Flags = DatabaseOpenFlags.None });
-        using var cursor = tx.CreateCursor(db);
-
-        var entries = new Dictionary<object, T>();
-
-        {
-            var keyPrefix = _types.GetKeyPrefix<T>();
-            var sr = cursor.SetRange(keyPrefix);
-            if (sr != MDBResultCode.Success)
-                return entries.Values;
-
-            var (r, k, v) = cursor.GetCurrent();
-
-            while (r == MDBResultCode.Success && !cancellationToken.IsCancellationRequested)
-            {
-                if (!k.AsSpan().StartsWith(keyPrefix))
-                    break;
-
-                var index = v.AsSpan();
-                if (index.Length == 0)
-                    break;
-
-                var keyType = _types.GetKeyType<T>();
-                var key = _stringToObject[keyType](Encoding.UTF8.GetString(index));
-                var value = new T();
-
-                _types.SetKey(value, key);
-                entries.Add(key, value);
-
-                r = cursor.Next();
-                if (r == MDBResultCode.Success)
-                    (r, k, v) = cursor.GetCurrent();
-            }
-        }
-
-        foreach (var entry in entries)
-        {
-            foreach (var field in _types.GetIndexFields<T>())
-            {
-                var indexKey = _types.GetIndexKey(entry.Value, field);
-                var sr = cursor.SetRange(indexKey);
-                if (sr != MDBResultCode.Success)
-                    return entries.Values;
-
-                var (r, k, v) = cursor.GetCurrent();
-
-                while (r == MDBResultCode.Success && !cancellationToken.IsCancellationRequested)
-                {
-                    if (!k.AsSpan().StartsWith(indexKey))
-                        break;
-
-                    var index = v.AsSpan();
-                    if (index.Length == 0)
-                        break;
-
-                    var fieldType = _types.GetFieldType<T>(field);
-                    var fieldRawValue = Encoding.UTF8.GetString(index);
-                    var fieldValue = _stringToObject[fieldType](fieldRawValue);
-
-                    _types.SetField(entry.Value, field, fieldValue);
-
-                    r = cursor.Next();
-                    if (r == MDBResultCode.Success)
-                        (r, k, v) = cursor.GetCurrent();
-                }
-            }
-        }
-
-        return entries.Values;
-    }
-
+    
     private const ushort MaxKeySizeBytes = 511;
 
-    private Dictionary<Type, PropertyInfo[]> _cachedProperties = new();
+    private readonly Dictionary<Type, PropertyInfo[]> _cachedProperties = new();
 
-    public void Append<T>(T indexable) where T : Indexable
+    public void Append<T>(T indexable, CancellationToken cancellationToken) where T : IIndexable
     {
         if (indexable == null) throw new ArgumentNullException(nameof(indexable));
 
@@ -152,13 +44,20 @@ public class Store : IDisposable
         using var ms = new MemoryStream();
         indexable.WriteToStream(ms, UseGzip);
 
+        var type = typeof(T);
+
+        // GUID
         var key = indexable.Id.ToByteArray();
 
+        // GUID => Buffer
         Index(db, tx, key, ms.ToArray());
 
-        if(!_cachedProperties.TryGetValue(typeof(T), out var properties))
-            _cachedProperties.Add(typeof(T), properties = 
-                typeof(T).GetProperties()
+        // Type => GUID
+        Index(db, tx, KeyBuilder.IndexKey(type, nameof(Indexable.Id), indexable.Id.ToString(), key), key);
+
+        if (!_cachedProperties.TryGetValue(type, out var properties))
+            _cachedProperties.Add(type, properties = 
+                type.GetProperties()
                 .Where(x => x.CanRead && x.HasAttribute<IndexedAttribute>())
                 .ToArray()
                 );
@@ -166,10 +65,12 @@ public class Store : IDisposable
         foreach (var property in properties)
             Index(db, tx, KeyBuilder.IndexKey(property, indexable, key), key);
 
+        _logger.LogInformation("Before Append: {Count} entries", GetEntriesCount(cancellationToken));
         tx.Commit();
+        _logger.LogInformation("After Append: {Count} entries", GetEntriesCount(cancellationToken));
     }
 
-    private static void Index(LightningDatabase db, LightningTransaction tx, byte[] key, byte[] value)
+    private static void Index(LightningDatabase db, LightningTransaction tx, ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
     {
         Debug.Assert(key.Length < MaxKeySizeBytes);
         if (key.Length > MaxKeySizeBytes)
@@ -187,7 +88,7 @@ public class Store : IDisposable
         return FindByKey<T>(lookupKey, cancellationToken);
     }
 
-    public IEnumerable<T> FindByKey<T>(byte[] key, CancellationToken cancellationToken) where T : IIndexable, new()
+    public IEnumerable<T> FindByKey<T>(ReadOnlySpan<byte> key, CancellationToken cancellationToken) where T : IIndexable, new()
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -222,6 +123,11 @@ public class Store : IDisposable
         }
 
         return entries;
+    }
+
+    public IEnumerable<T> Get<T>(CancellationToken cancellationToken) where T : IIndexable, new()
+    {
+        return FindByKey<T>(KeyBuilder.KeyPrefix(typeof(T), nameof(Indexable.Id)), cancellationToken);
     }
 
     public T? GetById<T>(Guid id, CancellationToken cancellationToken) where T : IIndexable, new() => GetById<T>(id.ToByteArray(), cancellationToken);

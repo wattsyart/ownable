@@ -39,14 +39,14 @@ internal sealed class ERC721Indexer : ERCTokenIndexer
             if (!knownContracts.TryGetContract(contractAddress, out var contract) || contract == null)
                 continue;
             contract.BlockNumber = blockNumber.ToString();
-            _store.Save(new Contract
+            _store.Append(new Contract
             {
                 Address = contract.Address,
                 BlockNumber = contract.BlockNumber,
                 Name = contract.Name,
                 Symbol = contract.Symbol,
                 Type = contract.Type
-            });
+            }, cancellationToken);
             return;
         }
 
@@ -102,7 +102,7 @@ internal sealed class ERC721Indexer : ERCTokenIndexer
 
             try
             {
-                _store.Save(contract);
+                _store.Append(contract, cancellationToken);
             }
             catch (Exception e)
             {

@@ -40,7 +40,7 @@ internal sealed class ERC1155Indexer : ERCTokenIndexer
             if (!knownContracts.TryGetContract(contractAddress, out var contract) || contract == null)
                 continue;
 
-            _store.Save(contract);
+            _store.Append(contract, cancellationToken);
             return;
         }
 
@@ -104,7 +104,7 @@ internal sealed class ERC1155Indexer : ERCTokenIndexer
 
             try
             {
-                _store.Save(contract);
+                _store.Append(contract, cancellationToken);
             }
             catch (Exception e)
             {
