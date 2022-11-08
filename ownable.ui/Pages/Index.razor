@@ -1,4 +1,7 @@
 ﻿@page "/"
+@using ownable.Indexers
+@using Nethereum.Hex.HexTypes
+@using ownable.Contracts
 @inherits WalletComponent
 
 <PageTitle>Ownable</PageTitle>
@@ -21,6 +24,39 @@
     {
         await base.OnInitializedAsync();
 
+        HostProvider.SelectedAccountChanged += OnSelectedAccountChanged;
+
         Model = await Http.GetFromJsonAsync<List<Contract>>("contracts");
+    }
+
+    private async Task OnSelectedAccountChanged(string account)
+    {
+        var web3 = await HostProvider.GetWeb3Async();
+        var eventType = web3.Eth.GetEvent<ERC721.Transfer>();
+        var receivedByAddress = eventType.CreateFilterInput(null, new object[] { account });
+        var receivedChangeLog = await eventType.GetAllChangesAsync(receivedByAddress);
+        foreach (var change in receivedChangeLog)
+        {
+            Console.WriteLine(change.Log.Address);
+
+            var contractAddress = change.Log.Address;
+            var tokenId = change.Event.GetTokenId();
+            var blockNumber = change.Log.BlockNumber;
+
+            var received = new Received
+            {
+                BlockNumber = blockNumber,
+                ContractAddress = contractAddress,
+                Address = change.Event.To,
+                TokenId = new HexBigInteger(tokenId).ToString()
+            };
+        }
+    }
+
+    public override void Dispose()
+    {
+        base.Dispose();
+
+        HostProvider.SelectedAccountChanged -= OnSelectedAccountChanged;
     }
 }

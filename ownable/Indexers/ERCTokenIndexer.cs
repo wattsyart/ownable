@@ -11,7 +11,7 @@ using ownable.Models.Indexed;
 
 namespace ownable.Indexers;
 
-internal abstract class ERCTokenIndexer : IIndexer
+public abstract class ERCTokenIndexer : IIndexer
 {
     private readonly Store _store;
     private readonly ILogger<IIndexer> _logger;

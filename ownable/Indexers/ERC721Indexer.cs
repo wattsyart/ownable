@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using Microsoft.Extensions.Logging;
-using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
 using ownable.Contracts;
@@ -10,7 +9,7 @@ using Contract = ownable.Models.Indexed.Contract;
 
 namespace ownable.Indexers;
 
-internal sealed class ERC721Indexer : ERCTokenIndexer
+public sealed class ERC721Indexer : ERCTokenIndexer
 {
     private readonly Store _store;
     private readonly IEnumerable<IKnownContracts> _knownContracts;

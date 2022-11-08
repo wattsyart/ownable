@@ -5,7 +5,7 @@ using ownable.Models;
 
 namespace ownable.Indexers;
 
-internal sealed class MetadataIndexer
+public sealed class MetadataIndexer
 {
     private readonly IEnumerable<IMetadataImageProcessor> _imageProcessors;
     private readonly IEnumerable<IMetadataImageHandler> _imageHandlers;

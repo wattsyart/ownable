@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ownable.ui", "ownable.ui\ownable.ui.csproj", "{FA67579B-8CAE-41EC-ACA6-37FDB8CB06E5}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{815BFD1A-6519-4024-BF48-9A460BE79616}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FBCD346E-167C-4BD0-9162-FFEE99939337} = {815BFD1A-6519-4024-BF48-9A460BE79616}
+		{0AD1AB0B-C834-44F9-A07C-4D094D8FDD5F} = {815BFD1A-6519-4024-BF48-9A460BE79616}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8E7D9EEE-FABE-4856-B199-12CB9CE4296C}
