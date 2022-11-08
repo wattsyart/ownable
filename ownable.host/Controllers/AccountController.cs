@@ -8,10 +8,12 @@ namespace ownable.host.Controllers;
 public class AccountController : Controller
 {
     private readonly Store _store;
+    private readonly ILogger<AccountController> _logger;
 
-    public AccountController(Store store)
+    public AccountController(Store store, ILogger<AccountController> logger)
     {
         _store = store;
+        _logger = logger;
     }
 
     [HttpGet("sent")]
