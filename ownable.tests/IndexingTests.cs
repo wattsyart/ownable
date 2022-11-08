@@ -6,6 +6,33 @@ namespace ownable.tests
 {
     public class IndexingTests
     {
+        [Fact]
+        public void AppendVsSaveWithSameKey()
+        {
+            var path = $"test-{Guid.NewGuid()}";
+            var store = new Store(path, NullLogger<Store>.Instance);
+
+            var contract = TestFactory.GetContract();
+            contract.BlockNumber = 1000;
+
+            store.Append(contract, CancellationToken.None);
+
+            contract.BlockNumber = 1001;
+            store.Append(contract, CancellationToken.None);
+
+            var all = store.Get<Contract>(CancellationToken.None).ToList();
+            Assert.Single(all);
+
+            // since we called append, no change is registered
+            Assert.Equal(1000, all.Single().BlockNumber);
+
+            // calling save, allows mutation, so block number is changed
+            store.Save(contract, CancellationToken.None);
+            all = store.Get<Contract>(CancellationToken.None).ToList();
+            AssertEqual(contract, all.Single());
+        }
+
+
         [Theory]
         [InlineData(1000)]
         public void LookupScalability(int records)

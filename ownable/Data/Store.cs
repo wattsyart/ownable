@@ -41,10 +41,21 @@ public class Store : IDisposable
     public void Append<T>(T indexable, CancellationToken cancellationToken) where T : IIndexable => Append(typeof(T), indexable, cancellationToken);
     public void Append(Type type, IIndexable indexable, CancellationToken cancellationToken)
     {
+        Set(type, indexable, cancellationToken, PutOptions.NoOverwrite);
+    }
+
+    public void Save<T>(T indexable, CancellationToken cancellationToken) where T : IIndexable => Save(typeof(T), indexable, cancellationToken);
+    public void Save(Type type, IIndexable indexable, CancellationToken cancellationToken)
+    {
+        Set(type, indexable, cancellationToken, PutOptions.None);
+    }
+
+    private void Set(Type type, IIndexable indexable, CancellationToken cancellationToken, PutOptions options)
+    {
         if (indexable == null) throw new ArgumentNullException(nameof(indexable));
 
         using var tx = _env.BeginTransaction();
-        using var db = tx.OpenDatabase(configuration: new DatabaseConfiguration { Flags = DatabaseOpenFlags.Create });
+        using var db = tx.OpenDatabase(configuration: new DatabaseConfiguration {Flags = DatabaseOpenFlags.Create});
 
         using var ms = new MemoryStream();
         indexable.WriteToStream(ms, UseGzip);
@@ -55,12 +66,12 @@ public class Store : IDisposable
 #else
         var key = indexable.Id.ToByteArray();
 #endif
-        
-        // GUID => Buffer
-        Index(db, tx, key, ms.ToArray());
+
+        // GUID => [buffer]
+        Index(db, tx, key, ms.ToArray(), options);
 
         // ID => GUID
-        Index(db, tx, KeyBuilder.IndexKey(type, nameof(Indexable.Id), indexable.Id.ToString(), key), key);
+        Index(db, tx, KeyBuilder.IndexKey(type, nameof(Indexable.Id), indexable.Id.ToString(), key), key, options);
 
         if (!_cachedProperties.TryGetValue(type, out var properties))
             _cachedProperties.Add(type, properties =
@@ -70,20 +81,20 @@ public class Store : IDisposable
             );
 
         foreach (var property in properties)
-            Index(db, tx, KeyBuilder.IndexKey(property, indexable, key), key);
+            Index(db, tx, KeyBuilder.IndexKey(property, indexable, key), key, options);
 
         _logger.LogInformation("Before Append: {Count} entries", GetEntriesCount(cancellationToken));
         tx.Commit();
         _logger.LogInformation("After Append: {Count} entries", GetEntriesCount(cancellationToken));
     }
 
-    private static void Index(LightningDatabase db, LightningTransaction tx, ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
+    private static void Index(LightningDatabase db, LightningTransaction tx, ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, PutOptions options)
     {
         Debug.Assert(key.Length < MaxKeySizeBytes);
         if (key.Length > MaxKeySizeBytes)
             throw new InvalidOperationException($"Key length ({key.Length}) exceeds MaxKeySizeBytes ({MaxKeySizeBytes})");
 
-        tx.Put(db, key, value, PutOptions.NoOverwrite);
+        tx.Put(db, key, value, options);
     }
 
     public IEnumerable<T> Find<T>(string key, string? value, CancellationToken cancellationToken) where T : IIndexable, new()
