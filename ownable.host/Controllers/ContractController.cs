@@ -20,7 +20,7 @@ public class ContractController : Controller
     public IActionResult GetContracts(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Entries: {Count}", _store.GetEntriesCount(cancellationToken));
-
-        return Ok(_store.Get<Contract>(cancellationToken));
+        var model = _store.Get<Contract>(cancellationToken);
+        return Ok(model);
     }
 }

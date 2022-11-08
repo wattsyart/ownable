@@ -1,0 +1,26 @@
+﻿@page "/"
+@inherits WalletComponent
+
+<PageTitle>Ownable</PageTitle>
+
+@if (Model != null)
+{
+    <ul>
+        @foreach (var item in Model)
+        {
+            <li>@item.Name</li>
+        }
+    </ul>
+}
+
+@code
+{
+    private List<Contract>? Model { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        Model = await Http.GetFromJsonAsync<List<Contract>>("contracts");
+    }
+}

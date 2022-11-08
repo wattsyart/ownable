@@ -1,0 +1,68 @@
+﻿@inherits WalletComponent;
+
+@if (IsVisible)
+{
+    <div>
+        @if (HostProvider.Available && !string.IsNullOrEmpty(HostProvider.SelectedAccount))
+        {
+            <button type="button" class="btn btn-sm btn-primary rounded-pill" @onclick="@OnClick">@ResolveAccountName()</button>
+        }
+        else if (HostProvider.Available && string.IsNullOrEmpty(HostProvider.SelectedAccount))
+        {
+            <button type="button" class="btn btn-sm btn-primary rounded-pill" @onclick="@EnableEthereumAsync">Connect Metamask</button>
+        }
+        else if(!HostProvider.Available)
+        {
+            <a type="button" class="btn btn-sm btn-primary rounded-pill" href="https://metamask.io/download" target="_blank">Get Metamask</a>
+        }
+    </div>
+}
+
+@code
+{
+    [Parameter]
+    public bool IsVisible { get; set; } = true;
+
+    [Parameter]
+    public string? Url { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        // fires AvailabilityChanged
+        var available = await HostProvider.CheckProviderAvailabilityAsync();
+        if (available)
+        {
+            if (string.IsNullOrWhiteSpace(HostProvider.SelectedAccount))
+            {
+                // fires SelectedAccountChanged
+                await HostProvider.GetProviderSelectedAccountAsync();
+            }
+
+            // fires NetworkChanged
+            await HostProvider.GetProviderNetworkAsync();
+        }
+    }
+    
+    private async Task EnableEthereumAsync()
+    {
+        // fires SelectedAccountChanged && EnabledChanged
+        await HostProvider.EnableProviderAsync();
+    }
+
+    private void OnClick()
+    {
+        if(!string.IsNullOrWhiteSpace(Url))
+            Nav.NavigateTo(Url);
+    }
+
+    private string ResolveAccountName()
+    {
+        var sb = new StringBuilder();
+        sb.Append(HostProvider.SelectedAccount?[..6]);
+        sb.Append("...");
+        sb.Append(HostProvider.SelectedAccount?.Substring(HostProvider.SelectedAccount.Length - 5, 5));
+        return sb.ToString();
+    }
+}
