@@ -4,6 +4,7 @@ namespace ownable.ui.Models;
 
 public class MetamaskHostProvider : IEthereumHostProvider
 {
+    private readonly ILogger<MetamaskHostProvider>? _logger;
     private readonly MetamaskInterceptor _metamaskInterceptor;
     private readonly IMetamaskInterop _metamaskInterop;
         
@@ -19,6 +20,14 @@ public class MetamaskHostProvider : IEthereumHostProvider
     public event Func<Network, Task>? NetworkChanged;
     public event Func<bool, Task>? AvailabilityChanged;
     public event Func<bool, Task>? EnabledChanged;
+
+    public MetamaskHostProvider(IMetamaskInterop metamaskInterop, ILogger<MetamaskHostProvider>? logger)
+    {
+        _metamaskInterop = metamaskInterop;
+        _logger = logger;
+        _metamaskInterceptor = new MetamaskInterceptor(_metamaskInterop, this);
+        Current = this;
+    }
 
     public async Task<bool> CheckProviderAvailabilityAsync()
     {
@@ -92,16 +101,9 @@ public class MetamaskHostProvider : IEthereumHostProvider
         return await _metamaskInterop.SignAsync(message.ToHexUTF8());
     }
 
-    public MetamaskHostProvider(IMetamaskInterop metamaskInterop)
-    {
-        _metamaskInterop = metamaskInterop;
-        _metamaskInterceptor = new MetamaskInterceptor(_metamaskInterop, this);
-        Current = this;
-    }
-        
     public async Task ChangeSelectedAccountAsync(string selectedAccount)
     {
-        Console.WriteLine("Event: SelectedAccountChanged");
+        _logger?.LogDebug("Event: SelectedAccountChanged");
         if (SelectedAccount != selectedAccount)
         {
             SelectedAccount = selectedAccount;
@@ -114,7 +116,7 @@ public class MetamaskHostProvider : IEthereumHostProvider
 
     public async Task ChangeNetworkAsync(Network network)
     {
-        Console.WriteLine("Event: NetworkChanged");
+        _logger?.LogDebug("Event: SelectedAccountChanged");
         if (Network != network)
         {
             Network = network;
@@ -127,7 +129,7 @@ public class MetamaskHostProvider : IEthereumHostProvider
 
     public async Task ChangeMetamaskAvailableAsync(bool available)
     {
-        Console.WriteLine("Event: AvailabilityChanged");
+        _logger?.LogDebug("Event: SelectedAccountChanged");
         Available = available;
         if (AvailabilityChanged != null)
         {

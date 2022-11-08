@@ -7,12 +7,12 @@
             
             ethereum.on("accountsChanged",
                 function (accounts) {
-                    DotNet.invokeMethodAsync("WalletConnector.Components.WalletComponent", "SelectedAccountChanged", accounts[0]);
+                    DotNet.invokeMethodAsync("ownable.ui", "SelectedAccountChanged", accounts[0]);
                 });
 
             ethereum.on("chainChanged",
                 function (networkId) {
-                    DotNet.invokeMethodAsync("WalletConnector.Components.WalletComponent", "NetworkChanged", networkId);
+                    DotNet.invokeMethodAsync("ownable.ui", "NetworkChanged", networkId);
                 });
 
             return accounts[0];
