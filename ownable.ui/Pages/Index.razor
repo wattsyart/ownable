@@ -1,24 +1,35 @@
 ﻿@page "/"
-@using ownable.Indexers
-@using Nethereum.Hex.HexTypes
-@using ownable.Contracts
 @inherits WalletComponent
+@inject EventService EventService
 
 <PageTitle>Ownable</PageTitle>
 
-@if (Model != null)
+@if (Contracts != null)
 {
+    <h2>Indexed Contracts</h2>
     <ul>
-        @foreach (var item in Model)
+        @foreach (var item in Contracts)
         {
             <li>@item.Name</li>
         }
     </ul>
 }
 
+@if (Received != null)
+{
+    <h2>Tokens Received</h2>
+    <ul>
+        @foreach (var item in Received)
+        {
+            <li>@item.ContractAddress: @item.TokenId at @item.BlockNumber</li>
+        }
+    </ul>
+}
+
 @code
 {
-    private List<Contract>? Model { get; set; }
+    private List<Contract>? Contracts { get; set; }
+    private List<Received>? Received { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -26,31 +37,20 @@
 
         HostProvider.SelectedAccountChanged += OnSelectedAccountChanged;
 
-        Model = await Http.GetFromJsonAsync<List<Contract>>("contracts");
+        Contracts = await Http.GetFromJsonAsync<List<Contract>>("contracts");
     }
 
     private async Task OnSelectedAccountChanged(string account)
     {
+        Logger?.LogInformation("Account changed to {Account}", account);
         var web3 = await HostProvider.GetWeb3Async();
-        var eventType = web3.Eth.GetEvent<ERC721.Transfer>();
-        var receivedByAddress = eventType.CreateFilterInput(null, new object[] { account });
-        var receivedChangeLog = await eventType.GetAllChangesAsync(receivedByAddress);
-        foreach (var change in receivedChangeLog)
-        {
-            Console.WriteLine(change.Log.Address);
 
-            var contractAddress = change.Log.Address;
-            var tokenId = change.Event.GetTokenId();
-            var blockNumber = change.Log.BlockNumber;
+        var fromBlock = BlockParameter.CreateEarliest();
+        var toBlock = BlockParameter.CreateLatest();
+        var received = await EventService.GetReceivedTokensAsync<ERC721.Transfer>(web3, account, fromBlock: fromBlock, toBlock: toBlock, logger: Logger);
+        Received = received.ToList();
 
-            var received = new Received
-            {
-                BlockNumber = blockNumber,
-                ContractAddress = contractAddress,
-                Address = change.Event.To,
-                TokenId = new HexBigInteger(tokenId).ToString()
-            };
-        }
+        Logger?.LogInformation("Found {Count} received tokens from {FromBlock} to {ToBlock}", Received?.Count, fromBlock.BlockNumber, toBlock.BlockNumber);
     }
 
     public override void Dispose()

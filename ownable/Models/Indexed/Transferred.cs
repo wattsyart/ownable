@@ -1,4 +1,5 @@
-﻿using ownable.Serialization;
+﻿using System.Numerics;
+using ownable.Serialization;
 
 namespace ownable.Models.Indexed;
 
@@ -8,18 +9,18 @@ public abstract class Transferred : Indexable
     public string? Address { get; set; }
 
     [Indexed]
-    public string? ContractAddress { get; set; }
+    public string ContractAddress { get; set; } = null!;
 
     [Indexed]
-    public string? TokenId { get; set; }
+    public BigInteger TokenId { get; set; }
 
     public override void Serialize(IndexSerializeContext context)
     {
         context.bw.Write(Id);
         context.bw.WriteNullableString(Address);
         context.bw.Write(BlockNumber);
-        context.bw.WriteNullableString(ContractAddress);
-        context.bw.WriteNullableString(TokenId);
+        context.bw.Write(ContractAddress);
+        context.bw.Write(TokenId);
     }
 
     public override void Deserialize(IndexDeserializeContext context)
@@ -27,7 +28,7 @@ public abstract class Transferred : Indexable
         Id = context.br.ReadGuid();
         Address = context.br.ReadNullableString();
         BlockNumber = context.br.ReadBigInteger();
-        ContractAddress = context.br.ReadNullableString();
-        TokenId = context.br.ReadNullableString();
+        ContractAddress = context.br.ReadString();
+        TokenId = context.br.ReadBigInteger();
     }
 }

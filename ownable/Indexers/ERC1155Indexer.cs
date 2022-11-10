@@ -5,6 +5,8 @@ using Nethereum.Web3;
 using ownable.Contracts;
 using ownable.Data;
 using ownable.Models;
+using ownable.Services;
+
 using Contract = ownable.Models.Indexed.Contract;
 
 namespace ownable.Indexers;
@@ -17,8 +19,8 @@ public sealed class ERC1155Indexer : ERCTokenIndexer
     private readonly MetadataIndexer _metadataIndexer;
     private readonly ILogger<ERC721Indexer> _logger;
 
-    public ERC1155Indexer(Store store, IEnumerable<IKnownContracts> knownContracts, IEnumerable<IMetadataProcessor> metadataProcessors, MetadataIndexer metadataIndexer, ILogger<ERC721Indexer> logger) : 
-        base(store, logger)
+    public ERC1155Indexer(Store store, EventService eventService, IEnumerable<IKnownContracts> knownContracts, IEnumerable<IMetadataProcessor> metadataProcessors, MetadataIndexer metadataIndexer, ILogger<ERC721Indexer> logger) : 
+        base(store, eventService, logger)
     {
         _store = store;
         _knownContracts = knownContracts;

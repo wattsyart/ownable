@@ -25,13 +25,13 @@ public static class TestFactory
     {
         var id = Guid.NewGuid();
 
-        var sent = new Sent()
+        var sent = new Sent
         {
             Address = "0xb47e3cd837ddf8e4c57f05d70ab865de6e193bbb",
             BlockNumber = 12345,
             ContractAddress = "0xb47e3cd837ddf8e4c57f05d70ab865de6e193bbb",
             Id = id,
-            TokenId = "12345"
+            TokenId = 12345
         };
 
         return sent;
@@ -47,7 +47,7 @@ public static class TestFactory
             BlockNumber = 12345,
             ContractAddress = "0xb47e3cd837ddf8e4c57f05d70ab865de6e193bbb",
             Id = id,
-            TokenId = "12345"
+            TokenId = 12345
         };
 
         return sent;

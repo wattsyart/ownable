@@ -12,7 +12,7 @@
       "commandName": "Project",
       "commandLineArgs": "--serve",
       "launchBrowser": true,
-      "launchUrl": "swagger",
+      "launchUrl": "",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },

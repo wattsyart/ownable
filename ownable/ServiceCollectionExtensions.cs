@@ -5,8 +5,8 @@ using ownable.Data;
 using ownable.Handlers;
 using ownable.Indexers;
 using ownable.Models;
-using ownable.Processors.Images;
-using ownable.Processors.Metadata;
+//using ownable.Processors.Images;
+//using ownable.Processors.Metadata;
 using ownable.Services;
 
 namespace ownable;
@@ -16,7 +16,9 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddIndexingServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<Store>();
+
         services.AddSingleton<Web3Service>();
+        services.AddSingleton<EventService>();
 
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IKnownContracts, KnownContracts>());
 

@@ -8,17 +8,20 @@ using ownable.Contracts;
 using ownable.Data;
 using ownable.Models;
 using ownable.Models.Indexed;
+using ownable.Services;
 
 namespace ownable.Indexers;
 
 public abstract class ERCTokenIndexer : IIndexer
 {
     private readonly Store _store;
+    private readonly EventService _eventService;
     private readonly ILogger<IIndexer> _logger;
 
-    protected ERCTokenIndexer(Store store, ILogger<IIndexer> logger)
+    protected ERCTokenIndexer(Store store, EventService eventService, ILogger<IIndexer> logger)
     {
         _store = store;
+        _eventService = eventService;
         _logger = logger;
     }
 
@@ -32,35 +35,17 @@ public abstract class ERCTokenIndexer : IIndexer
         await IndexSentAsync<TEvent>(web3, rootAddress, fromBlock, toBlock, cancellationToken);
     }
 
-    protected async Task<Event<T>> IndexReceivedAsync<T>(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken) 
-        where T : ITransferEvent, ITokenEvent, new()
+    protected async Task IndexReceivedAsync<TEvent>(IWeb3 web3, string account, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken) 
+        where TEvent : ITransferEvent, ITokenEvent, new()
     {
-        var @event = web3.Eth.GetEvent<T>();
-        var receivedByAddress = @event.CreateFilterInput(null, new object[] { rootAddress });
-        receivedByAddress.FromBlock = fromBlock;
-        receivedByAddress.ToBlock = toBlock;
+        var receivedTokens = await _eventService.GetReceivedTokensAsync<TEvent>(web3, account, fromBlock: fromBlock, toBlock: toBlock, logger: _logger);
 
-        var receivedChangeLog = await @event.GetAllChangesAsync(receivedByAddress);
-        foreach (var change in receivedChangeLog)
+        foreach (var received in receivedTokens)
         {
-            var contractAddress = change.Log.Address;
-            var tokenId = change.Event.GetTokenId();
-            var blockNumber = change.Log.BlockNumber;
-
-            var received = new Received
-            {
-                BlockNumber = blockNumber,
-                ContractAddress = contractAddress,
-                Address = change.Event.To,
-                TokenId = new HexBigInteger(tokenId).ToString()
-            };
-
             _store.Append(received, cancellationToken);
 
-            await IndexContractAddress(web3, contractAddress, tokenId, blockNumber, cancellationToken);
+            await IndexContractAddress(web3, received.ContractAddress, received.TokenId, received.BlockNumber, cancellationToken);
         }
-
-        return @event;
     }
 
     protected async Task IndexSentAsync<T>(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken) 
@@ -83,7 +68,7 @@ public abstract class ERCTokenIndexer : IIndexer
                 BlockNumber = blockNumber,
                 ContractAddress = contractAddress,
                 Address = change.Event.From,
-                TokenId = new HexBigInteger(tokenId).ToString()
+                TokenId = new HexBigInteger(tokenId)
             };
 
             _store.Append(sent, cancellationToken);
