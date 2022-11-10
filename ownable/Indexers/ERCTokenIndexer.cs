@@ -38,12 +38,10 @@ public abstract class ERCTokenIndexer : IIndexer
     protected async Task IndexReceivedAsync<TEvent>(IWeb3 web3, string account, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken) 
         where TEvent : ITransferEvent, ITokenEvent, new()
     {
-        var receivedTokens = await _eventService.GetReceivedTokensAsync<TEvent>(web3, account, fromBlock: fromBlock, toBlock: toBlock, logger: _logger);
+        var receivedTokens = await _eventService.GetReceivedTokensAsync<TEvent>(web3, account, fromBlock: fromBlock, toBlock: toBlock, cancellationToken, _logger);
 
         foreach (var received in receivedTokens)
         {
-            _store.Append(received, cancellationToken);
-
             await IndexContractAddress(web3, received.ContractAddress, received.TokenId, received.BlockNumber, cancellationToken);
         }
     }
@@ -57,6 +55,7 @@ public abstract class ERCTokenIndexer : IIndexer
         sentByAddress.ToBlock = toBlock;
 
         var sentChangeLog = await @event.GetAllChangesAsync(sentByAddress);
+
         foreach (var change in sentChangeLog)
         {
             var contractAddress = change.Log.Address;

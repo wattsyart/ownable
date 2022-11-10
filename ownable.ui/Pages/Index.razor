@@ -47,10 +47,10 @@
 
         var fromBlock = BlockParameter.CreateEarliest();
         var toBlock = BlockParameter.CreateLatest();
-        var received = await EventService.GetReceivedTokensAsync<ERC721.Transfer>(web3, account, fromBlock: fromBlock, toBlock: toBlock, logger: Logger);
+        var received = await EventService.GetReceivedTokensAsync<ERC721.Transfer>(web3, account, fromBlock: fromBlock, toBlock: toBlock, CancellationToken.None, Logger);
         Received = received.ToList();
 
-        Logger?.LogInformation("Found {Count} received tokens from {FromBlock} to {ToBlock}", Received?.Count, fromBlock.BlockNumber, toBlock.BlockNumber);
+        Logger?.LogInformation("Found {Count} received tokens from {FromBlock} to {ToBlock}", Received?.Count, fromBlock.BlockNumber?.ToString() ?? "earliest", toBlock.BlockNumber?.ToString() ?? "latest");
     }
 
     public override void Dispose()
