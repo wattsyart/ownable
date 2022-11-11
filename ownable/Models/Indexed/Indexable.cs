@@ -14,8 +14,17 @@ public abstract class Indexable : IIndexable
     [JsonConverter(typeof(BigIntegerConverter))]
     public BigInteger BlockNumber { get; set; }
 
-    public abstract void Serialize(IndexSerializeContext context);
-    public abstract void Deserialize(IndexDeserializeContext context);
+    public virtual void Serialize(IndexSerializeContext context)
+    {
+        context.bw.Write(Id);
+        context.bw.Write(BlockNumber);
+    }
+
+    public virtual void Deserialize(IndexDeserializeContext context)
+    {
+        Id = context.br.ReadGuid();
+        BlockNumber = context.br.ReadBigInteger();
+    }
 
     public void WriteToStream(Stream stream, bool gzip = false)
     {

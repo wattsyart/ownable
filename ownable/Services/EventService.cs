@@ -5,8 +5,7 @@ using Nethereum.RPC.Eth.DTOs;
 using ownable.Contracts;
 using ownable.Models.Indexed;
 using Nethereum.Web3;
-using ownable.Handlers;
-using ownable.Serialization;
+using ownable.Models;
 
 namespace ownable.Services
 {

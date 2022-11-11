@@ -1,6 +1,6 @@
 ﻿using ownable.Models.Indexed;
 
-namespace ownable.Handlers;
+namespace ownable.Models;
 
 public interface IIndexableHandler
 {

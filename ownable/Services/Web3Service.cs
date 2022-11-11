@@ -9,9 +9,9 @@ namespace ownable.Services;
 internal sealed class Web3Service
 {
     private readonly IOptionsMonitor<Web3Options> _options;
-    private readonly IEnumerable<IIndexer> _indexers;
+    private readonly IEnumerable<IBlockIndexer> _indexers;
     
-    public Web3Service(IOptionsMonitor<Web3Options> options, IEnumerable<IIndexer> indexers)
+    public Web3Service(IOptionsMonitor<Web3Options> options, IEnumerable<IBlockIndexer> indexers)
     {
         _options = options;
         _indexers = indexers;

@@ -39,6 +39,13 @@ public class Store : IDisposable
 
     private readonly Dictionary<Type, PropertyInfo[]> _cachedProperties = new();
 
+    public void AppendMany<T>(IEnumerable<T> indexable, CancellationToken cancellationToken) where T : IIndexable => AppendMany(typeof(T), (IEnumerable<IIndexable>) indexable, cancellationToken);
+    public void AppendMany(Type type, IEnumerable<IIndexable> indexable, CancellationToken cancellationToken)
+    {
+        foreach(var item in indexable)
+            Put(type, item, PutOptions.NoOverwrite, cancellationToken);
+    }
+
     public void Append<T>(T indexable, CancellationToken cancellationToken) where T : IIndexable => Append(typeof(T), indexable, cancellationToken);
     public void Append(Type type, IIndexable indexable, CancellationToken cancellationToken)
     {

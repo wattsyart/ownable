@@ -7,6 +7,7 @@ using ownable.Data;
 using ownable.Handlers;
 using ownable.Indexers;
 using ownable.Models;
+using ownable.Processors.Metadata;
 using ownable.Serialization.Converters;
 //using ownable.Processors.Images;
 //using ownable.Processors.Metadata;
@@ -35,11 +36,11 @@ public static class ServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IIndexableHandler, ServerIndexableHandler>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IKnownContracts, KnownContracts>());
 
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IIndexer, ERC721Indexer>());
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IIndexer, ERC1155Indexer>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IBlockIndexer, ERC721Indexer>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IBlockIndexer, ERC1155Indexer>());
 
         //services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, HttpMetadataProcessor>());
-        //services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, DataUriMetadataProcessor>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, DataUriMetadataProcessor>());
         //services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, IpfsMetadataProcessor>());
 
         //services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataImageProcessor, HttpImageProcessor>());
@@ -49,6 +50,7 @@ public static class ServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataImageHandler, FileImageHandler>());
 
         services.AddSingleton<MetadataIndexer>();
+        services.AddSingleton<MediaIndexer>();
 
         services.Configure<Web3Options>(configuration.GetSection("Web3"));
         return services;

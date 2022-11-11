@@ -52,4 +52,20 @@ public static class TestFactory
 
         return sent;
     }
+
+    public static List<Trait> GetTraits()
+    {
+        var id = Guid.NewGuid();
+
+        var trait = new Trait
+        {
+            Id = id,
+            BlockNumber = 12345,
+            Type = "Mood",
+            Value = "Optimistic"
+        };
+
+        var traits = new List<Trait> {trait};
+        return traits;
+    }
 }

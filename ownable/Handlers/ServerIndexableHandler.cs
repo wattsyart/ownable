@@ -1,4 +1,5 @@
 ﻿using ownable.Data;
+using ownable.Models;
 using ownable.Models.Indexed;
 
 namespace ownable.Handlers

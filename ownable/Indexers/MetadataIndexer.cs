@@ -1,18 +1,24 @@
 ﻿using System.Numerics;
 using Microsoft.Extensions.Logging;
-using ownable.Handlers;
+using ownable.Data;
 using ownable.Models;
+using ownable.Models.Indexed;
 
 namespace ownable.Indexers;
 
 public sealed class MetadataIndexer
 {
+    private readonly Store _store;
+    private readonly MediaIndexer _mediaIndexer;
+
     private readonly IEnumerable<IMetadataImageProcessor> _imageProcessors;
     private readonly IEnumerable<IMetadataImageHandler> _imageHandlers;
     private readonly ILogger<MetadataIndexer> _logger;
 
-    public MetadataIndexer(IEnumerable<IMetadataImageProcessor> imageProcessors, IEnumerable<IMetadataImageHandler> imageHandlers, ILogger<MetadataIndexer> logger)
+    public MetadataIndexer(Store store, MediaIndexer mediaIndexer, IEnumerable<IMetadataImageProcessor> imageProcessors, IEnumerable<IMetadataImageHandler> imageHandlers, ILogger<MetadataIndexer> logger)
     {
+        _store = store;
+        _mediaIndexer = mediaIndexer;
         _imageProcessors = imageProcessors;
         _imageHandlers = imageHandlers;
         _logger = logger;
@@ -20,6 +26,24 @@ public sealed class MetadataIndexer
 
     public async Task IndexAsync(JsonTokenMetadata metadata, string contractAddress, BigInteger tokenId, BigInteger blockNumber, CancellationToken cancellationToken)
     {
+        if (metadata.Attributes != null)
+        {
+            foreach (var attribute in metadata.Attributes)
+            {
+                var trait = new Trait
+                {
+                    Type = attribute.TraitType,
+                    Value = attribute.Value,
+                    TokenId = tokenId,
+                    BlockNumber = blockNumber
+                };
+
+                _store.Save(trait, cancellationToken);
+            }
+        }
+
+        return;
+
         foreach (var processor in _imageProcessors)
         {
             if (!processor.CanProcess(metadata))

@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace ownable.Handlers;
+namespace ownable.Models;
 
 public interface IMetadataImageHandler
 {

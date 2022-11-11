@@ -7,6 +7,23 @@ namespace ownable.tests;
 public class IndexingTests
 {
     [Fact]
+    public void LookupTraitByKey()
+    {
+        var path = $"test-{Guid.NewGuid()}";
+        var store = new Store(path, NullLogger<Store>.Instance);
+
+        var traits = TestFactory.GetTraits();
+        store.AppendMany(traits, CancellationToken.None);
+
+        var all = store.Get<Trait>(CancellationToken.None).ToList();
+        Assert.Single(all);
+
+        var key = KeyBuilder.KeyLookup(typeof(Trait), "Mood", "Optimistic").ToArray();
+        var results = store.FindByKey<Trait>(key, CancellationToken.None);
+        Assert.Single(results);
+    }
+
+    [Fact]
     public void AppendVsSaveWithSameKey()
     {
         var path = $"test-{Guid.NewGuid()}";

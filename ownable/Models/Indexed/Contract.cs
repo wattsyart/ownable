@@ -19,9 +19,8 @@ public sealed class Contract : Indexable
 
     public override void Serialize(IndexSerializeContext context)
     {
-        context.bw.Write(Id);
+        base.Serialize(context);
         context.bw.WriteNullableString(Address);
-        context.bw.Write(BlockNumber);
         context.bw.WriteNullableString(Type);
         context.bw.WriteNullableString(Name);
         context.bw.WriteNullableString(Symbol);
@@ -29,9 +28,8 @@ public sealed class Contract : Indexable
 
     public override void Deserialize(IndexDeserializeContext context)
     {
-        Id = context.br.ReadGuid();
+        base.Deserialize(context);
         Address = context.br.ReadNullableString();
-        BlockNumber = context.br.ReadBigInteger();
         Type = context.br.ReadNullableString();
         Name = context.br.ReadNullableString();
         Symbol = context.br.ReadNullableString();

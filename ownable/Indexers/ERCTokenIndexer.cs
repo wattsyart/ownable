@@ -12,13 +12,13 @@ using ownable.Services;
 
 namespace ownable.Indexers;
 
-public abstract class ERCTokenIndexer : IIndexer
+public abstract class ERCTokenIndexer : IBlockIndexer
 {
     private readonly Store _store;
     private readonly EventService _eventService;
-    private readonly ILogger<IIndexer> _logger;
+    private readonly ILogger<IBlockIndexer> _logger;
 
-    protected ERCTokenIndexer(Store store, EventService eventService, ILogger<IIndexer> logger)
+    protected ERCTokenIndexer(Store store, EventService eventService, ILogger<IBlockIndexer> logger)
     {
         _store = store;
         _eventService = eventService;

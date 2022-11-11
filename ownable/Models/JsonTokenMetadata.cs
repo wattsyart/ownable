@@ -1,8 +1,10 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Diagnostics;
+using System.Text.Json.Serialization;
 using ownable.Serialization.Converters;
 
 namespace ownable.Models;
 
+[DebuggerDisplay("{Name} ({Attributes?.Count} attributes)")]
 public sealed class JsonTokenMetadata
 {
     [JsonPropertyName("description")]
@@ -22,5 +24,5 @@ public sealed class JsonTokenMetadata
 
     [JsonPropertyName("attributes")]
     [JsonConverter(typeof(EmptyStringAttributesConverter))]
-    public List<JsonTokenMetadataAttribute> Attributes { get; set; } = new();
+    public List<JsonTokenMetadataAttribute>? Attributes { get; set; }
 }
