@@ -6,6 +6,8 @@ using ownable.Contracts;
 using ownable.Models.Indexed;
 using Nethereum.Web3;
 using ownable.Models;
+using ownable.Data;
+using System.Threading;
 
 namespace ownable.Services
 {
@@ -18,6 +20,44 @@ namespace ownable.Services
         {
             _handlers = handlers;
             _options = options;
+        }
+
+        public async Task<IEnumerable<Sent>> GetSentTokensAsync<TEvent>(IWeb3 web3, string account, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken, ILogger? logger = null) where TEvent : ITransferEvent, ITokenEvent, new()
+        {
+            logger?.LogInformation("Starting event fetch");
+
+            var eventType = web3.Eth.GetEvent<TEvent>();
+            var sentByAddress = eventType.CreateFilterInput(new object[] { account }, filterTopic2: null);
+            sentByAddress.FromBlock = fromBlock;
+            sentByAddress.ToBlock = toBlock;
+
+            var sentChangeLog = await eventType.GetAllChangesAsync(sentByAddress);
+            logger?.LogInformation("Fetched {Count} changes from filter", sentChangeLog.Count);
+
+            var sent = new List<Sent>();
+            foreach (var change in sentChangeLog)
+            {
+                var contractAddress = change.Log.Address;
+                var tokenId = change.Event.GetTokenId();
+                var blockNumber = change.Log.BlockNumber;
+
+                sent.Add(new Sent
+                {
+                    BlockNumber = blockNumber,
+                    ContractAddress = contractAddress,
+                    Address = change.Event.From,
+                    TokenId = new HexBigInteger(tokenId)
+                });
+            }
+
+            logger?.LogInformation(JsonSerializer.Serialize(sent, _options));
+
+            foreach (var handler in _handlers)
+            {
+                await handler.HandleBatchAsync(sent, cancellationToken);
+            }
+
+            return sent;
         }
 
         public async Task<IEnumerable<Received>> GetReceivedTokensAsync<TEvent>(IWeb3 web3, string account, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken, ILogger? logger = null) where TEvent : ITransferEvent, ITokenEvent, new()

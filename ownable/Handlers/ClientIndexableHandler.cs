@@ -29,4 +29,15 @@ public sealed class ClientIndexableHandler : IIndexableHandler
         var response = await _http.SendAsync(request, cancellationToken);
         return response.IsSuccessStatusCode;
     }
+
+    public async Task<bool> HandleBatchAsync(List<Sent> batch, CancellationToken cancellationToken)
+    {
+        var json = JsonSerializer.Serialize(batch, _options);
+
+        var request = new HttpRequestMessage(HttpMethod.Put, "indices");
+        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await _http.SendAsync(request, cancellationToken);
+        return response.IsSuccessStatusCode;
+    }
 }

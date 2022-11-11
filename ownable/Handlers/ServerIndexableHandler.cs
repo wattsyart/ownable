@@ -22,5 +22,15 @@ namespace ownable.Handlers
 
             return Task.FromResult(true);
         }
+
+        public Task<bool> HandleBatchAsync(List<Sent> batch, CancellationToken cancellationToken)
+        {
+            foreach (var item in batch)
+            {
+                _store.Save(item, cancellationToken);
+            }
+
+            return Task.FromResult(true);
+        }
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.DTOs;
+using ownable.Models;
 using ownable.Services;
 
 namespace ownable;
@@ -35,8 +36,10 @@ internal class Commands
                     toBlock = new BlockParameter(new HexBigInteger(toValue));
             }
 
+
+            var scope = IndexScope.All;
             var service = serviceProvider.GetRequiredService<Web3Service>();
-            service.IndexAddressAsync(address, fromBlock, toBlock, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
+            service.IndexAddressAsync(address, fromBlock, toBlock, scope, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
         return configuration;

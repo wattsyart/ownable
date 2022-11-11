@@ -29,13 +29,16 @@ public sealed class ERC1155Indexer : ERCTokenIndexer
         _logger = logger;
     }
 
-    public override async Task IndexAsync(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken)
+    public override async Task IndexAsync(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken)
     {
-        await IndexTransfersAsync<ERC1155.TransferSingle>(web3, rootAddress, fromBlock, toBlock, cancellationToken);
-        await IndexTransfersAsync<ERC1155.TransferBatch>(web3, rootAddress, fromBlock, toBlock, cancellationToken);
+        if (scope.HasFlagFast(IndexScope.TokenTransfers))
+        {
+            await IndexTransfersAsync<ERC1155.TransferSingle>(web3, rootAddress, fromBlock, toBlock, scope, cancellationToken);
+            await IndexTransfersAsync<ERC1155.TransferBatch>(web3, rootAddress, fromBlock, toBlock, scope, cancellationToken);
+        }
     }
 
-    protected override async Task IndexContractAddress(IWeb3 web3, string contractAddress, BigInteger tokenId, BigInteger blockNumber, CancellationToken cancellationToken)
+    protected override async Task IndexContractAddress(IWeb3 web3, string contractAddress, BigInteger tokenId, BigInteger blockNumber, IndexScope scope, CancellationToken cancellationToken)
     {
         var atBlock = blockNumber.ToBlockParameter();
 
@@ -76,34 +79,38 @@ public sealed class ERC1155Indexer : ERCTokenIndexer
                 Symbol = await TryGetSymbolAsync<ERC1155.SymbolFunction>(web3, contractAddress, features, atBlock)
             };
 
-            try
+            if (scope.HasFlagFast(IndexScope.TokenMetadata))
             {
-                var tokenUri = await TryGetTokenUriAsync<ERC1155.URIFunction>(web3, contractAddress, tokenId, features, atBlock);
-                if (tokenUri != null)
+                try
                 {
-                    var foundProcessor = false;
-                    JsonTokenMetadata? metadata = null;
-                    foreach (var processor in _metadataProcessors)
+                    var tokenUri = await TryGetTokenUriAsync<ERC1155.URIFunction>(web3, contractAddress, tokenId, features, atBlock);
+                    if (tokenUri != null)
                     {
-                        if (!processor.CanProcess(tokenUri))
-                            continue;
+                        var foundProcessor = false;
+                        JsonTokenMetadata? metadata = null;
+                        foreach (var processor in _metadataProcessors)
+                        {
+                            if (!processor.CanProcess(tokenUri))
+                                continue;
 
-                        foundProcessor = true;
-                        metadata = await processor.ProcessAsync(tokenUri, cancellationToken);
+                            foundProcessor = true;
+                            metadata = await processor.ProcessAsync(tokenUri, cancellationToken);
 
-                        if (metadata == null)
-                            _logger.LogWarning("Processor {ProcessorName} failed to process metadata, when it reported it was capable", processor.GetType().Name);
+                            if (metadata == null)
+                                _logger.LogWarning("Processor {ProcessorName} failed to process metadata, when it reported it was capable", processor.GetType().Name);
+                        }
+
+                        if (metadata != null)
+                            await _metadataIndexer.IndexAsync(metadata, contractAddress, tokenId, blockNumber, scope, cancellationToken);
+
+                        else if (!foundProcessor)
+                            _logger.LogWarning("No metadata processor found for {Uri}", tokenUri);
                     }
-
-                    if (metadata != null)
-                        await _metadataIndexer.IndexAsync(metadata, contractAddress, tokenId, blockNumber, cancellationToken);
-                    else if (!foundProcessor)
-                        _logger.LogWarning("No metadata processor found for {Uri}", tokenUri);
                 }
-            }
-            catch (Exception e)
-            {
-                _logger.LogWarning(e, "Contract Address {ContractAddress} failed to fetch token URI", contractAddress);
+                catch (Exception e)
+                {
+                    _logger.LogWarning(e, "Contract Address {ContractAddress} failed to fetch token URI", contractAddress);
+                }
             }
 
             try

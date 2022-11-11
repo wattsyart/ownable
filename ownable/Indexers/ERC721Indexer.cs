@@ -28,12 +28,15 @@ public sealed class ERC721Indexer : ERCTokenIndexer
         _logger = logger;
     }
 
-    public override async Task IndexAsync(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken)
+    public override async Task IndexAsync(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken)
     {
-        await IndexTransfersAsync<ERC721.Transfer>(web3, rootAddress, fromBlock, toBlock, cancellationToken);
+        if (scope.HasFlagFast(IndexScope.TokenTransfers))
+        {
+            await IndexTransfersAsync<ERC721.Transfer>(web3, rootAddress, fromBlock, toBlock, scope, cancellationToken);
+        }
     }
 
-    protected override async Task IndexContractAddress(IWeb3 web3, string contractAddress, BigInteger tokenId, BigInteger blockNumber, CancellationToken cancellationToken)
+    protected override async Task IndexContractAddress(IWeb3 web3, string contractAddress, BigInteger tokenId, BigInteger blockNumber, IndexScope scope, CancellationToken cancellationToken)
     {
         var atBlock = blockNumber.ToBlockParameter();
 
@@ -93,7 +96,7 @@ public sealed class ERC721Indexer : ERCTokenIndexer
                     }
 
                     if (metadata != null)
-                        await _metadataIndexer.IndexAsync(metadata, contractAddress, tokenId, blockNumber, cancellationToken);
+                        await _metadataIndexer.IndexAsync(metadata, contractAddress, tokenId, blockNumber, scope, cancellationToken);
                     else if (!foundProcessor)
                         _logger.LogWarning("No metadata processor found for {Uri}", tokenUri);
                 }

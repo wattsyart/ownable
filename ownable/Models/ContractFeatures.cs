@@ -1,4 +1,4 @@
-﻿namespace ownable.Indexers;
+﻿namespace ownable.Models;
 
 [Flags]
 public enum ContractFeatures
@@ -18,7 +18,7 @@ public static class ContractFeaturesExtensions
     public static bool SupportsUri(this ContractFeatures value) => value.HasFlagFast(ContractFeatures.SupportsUri);
     public static bool SupportsName(this ContractFeatures value) => value.HasFlagFast(ContractFeatures.SupportsName);
     public static bool SupportsSymbol(this ContractFeatures value) => value.HasFlagFast(ContractFeatures.SupportsSymbol);
-    
+
     public static bool HasFlagFast(this ContractFeatures value, ContractFeatures flag)
     {
         return (value & flag) != 0;

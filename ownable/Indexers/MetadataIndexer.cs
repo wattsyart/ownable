@@ -24,33 +24,36 @@ public sealed class MetadataIndexer
         _logger = logger;
     }
 
-    public async Task IndexAsync(JsonTokenMetadata metadata, string contractAddress, BigInteger tokenId, BigInteger blockNumber, CancellationToken cancellationToken)
+    public async Task IndexAsync(JsonTokenMetadata metadata, string contractAddress, BigInteger tokenId, BigInteger blockNumber, IndexScope scope, CancellationToken cancellationToken)
     {
-        if (metadata.Attributes != null)
+        if (scope.HasFlagFast(IndexScope.TokenMetadataAttributes))
         {
-            foreach (var attribute in metadata.Attributes)
+            if (metadata.Attributes != null)
             {
-                var trait = new Trait
+                foreach (var attribute in metadata.Attributes)
                 {
-                    Type = attribute.TraitType,
-                    Value = attribute.Value,
-                    TokenId = tokenId,
-                    BlockNumber = blockNumber
-                };
+                    var trait = new Trait
+                    {
+                        Type = attribute.TraitType,
+                        Value = attribute.Value,
+                        TokenId = tokenId,
+                        BlockNumber = blockNumber
+                    };
 
-                _store.Save(trait, cancellationToken);
+                    _store.Save(trait, cancellationToken);
+                }
             }
         }
 
         return;
-
+        
         foreach (var processor in _imageProcessors)
         {
             if (!processor.CanProcess(metadata))
                 continue;
 
             var processorName = processor.GetType().Name;
-            _logger.LogInformation("Processing metadata with {ProcessorName}", processorName);
+            _logger.LogInformation("Processing metadata images with {ProcessorName}", processorName);
 
             var (stream, extension) = await processor.ProcessAsync(metadata, cancellationToken);
 

@@ -5,5 +5,5 @@ namespace ownable.Models;
 
 public interface IBlockIndexer
 {
-    Task IndexAsync(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken);
+    Task IndexAsync(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken);
 }

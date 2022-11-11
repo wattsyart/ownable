@@ -25,28 +25,27 @@ public abstract class ERCTokenIndexer : IBlockIndexer
         _logger = logger;
     }
 
-    public abstract Task IndexAsync(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock,
-        CancellationToken cancellationToken);
+    public abstract Task IndexAsync(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken);
 
-    protected async Task IndexTransfersAsync<TEvent>(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken)
-        where TEvent : ITokenEvent, ITransferEvent, new()
+    protected async Task IndexTransfersAsync<TEvent>(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken) where TEvent : ITokenEvent, ITransferEvent, new()
     {
-        await IndexReceivedAsync<TEvent>(web3, rootAddress, fromBlock, toBlock, cancellationToken);
-        await IndexSentAsync<TEvent>(web3, rootAddress, fromBlock, toBlock, cancellationToken);
+        await IndexReceivedAsync<TEvent>(web3, rootAddress, fromBlock, toBlock, scope, cancellationToken);
+        await IndexSentAsync<TEvent>(web3, rootAddress, fromBlock, toBlock, scope, cancellationToken);
     }
 
-    protected async Task IndexReceivedAsync<TEvent>(IWeb3 web3, string account, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken) 
+    protected async Task IndexReceivedAsync<TEvent>(IWeb3 web3, string account, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken) 
         where TEvent : ITransferEvent, ITokenEvent, new()
     {
         var receivedTokens = await _eventService.GetReceivedTokensAsync<TEvent>(web3, account, fromBlock: fromBlock, toBlock: toBlock, cancellationToken, _logger);
 
         foreach (var received in receivedTokens)
         {
-            await IndexContractAddress(web3, received.ContractAddress, received.TokenId, received.BlockNumber, cancellationToken);
+            if(scope.HasFlagFast(IndexScope.TokenContracts))
+                await IndexContractAddress(web3, received.ContractAddress, received.TokenId, received.BlockNumber, scope, cancellationToken);
         }
     }
 
-    protected async Task IndexSentAsync<T>(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken) 
+    protected async Task IndexSentAsync<T>(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken) 
         where T : ITransferEvent, ITokenEvent, new()
     {
         var @event = web3.Eth.GetEvent<T>();
@@ -72,12 +71,11 @@ public abstract class ERCTokenIndexer : IBlockIndexer
 
             _store.Append(sent, cancellationToken);
 
-            await IndexContractAddress(web3, contractAddress, tokenId, blockNumber, cancellationToken);
+            await IndexContractAddress(web3, contractAddress, tokenId, blockNumber, scope, cancellationToken);
         }
     }
 
-    protected abstract Task IndexContractAddress(IWeb3 web3, string contractAddress, BigInteger tokenId,
-        BigInteger blockNumber, CancellationToken cancellationToken);
+    protected abstract Task IndexContractAddress(IWeb3 web3, string contractAddress, BigInteger tokenId, BigInteger blockNumber, IndexScope scope, CancellationToken cancellationToken);
 
     protected async Task<ContractFeatures> GetContractFeaturesAsync(IWeb3 web3, string contractAddress,
         byte[]? standardInterface,
