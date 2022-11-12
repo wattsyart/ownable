@@ -18,7 +18,8 @@ public sealed class ERC721Indexer : ERCTokenIndexer
     private readonly IEnumerable<IMetadataProcessor> _metadataProcessors;
     private readonly MetadataIndexer _metadataIndexer;
     private readonly ILogger<ERC721Indexer> _logger;
-    
+    private readonly ERCSpecification _specification;
+
     public ERC721Indexer(Store store, TokenService tokenService, IEnumerable<IKnownContracts> knownContracts, IEnumerable<IMetadataProcessor> metadataProcessors, MetadataIndexer metadataIndexer,  ILogger<ERC721Indexer> logger) :
         base(store, tokenService, logger)
     {
@@ -28,6 +29,15 @@ public sealed class ERC721Indexer : ERCTokenIndexer
         _metadataProcessors = metadataProcessors;
         _metadataIndexer = metadataIndexer;
         _logger = logger;
+
+        _specification = new ERCSpecification
+        {
+            standardInterface = InterfaceIds.ERC721,
+            metadataInterface = InterfaceIds.ERC721Metadata,
+            uriInterface = InterfaceIds.TokenURI,
+            nameInterface = InterfaceIds.Name,
+            symbolInterface = InterfaceIds.Symbol
+        };
     }
 
     public override async Task IndexAsync(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken)
@@ -58,7 +68,7 @@ public sealed class ERC721Indexer : ERCTokenIndexer
             return;
         }
 
-        var features = await GetContractFeaturesAsync(web3, contractAddress, InterfaceIds.ERC721, InterfaceIds.ERC721Metadata, InterfaceIds.TokenURI, InterfaceIds.Name, InterfaceIds.Symbol);
+        var features = await GetContractFeaturesAsync(web3, contractAddress, _specification);
 
         if (features.SupportsMetadata())
         {

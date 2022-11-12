@@ -19,6 +19,7 @@ public sealed class ERC1155Indexer : ERCTokenIndexer
     private readonly IEnumerable<IMetadataProcessor> _metadataProcessors;
     private readonly MetadataIndexer _metadataIndexer;
     private readonly ILogger<ERC721Indexer> _logger;
+    private readonly ERCSpecification _specification;
 
     public ERC1155Indexer(Store store, TokenService tokenService, IEnumerable<IKnownContracts> knownContracts, IEnumerable<IMetadataProcessor> metadataProcessors, MetadataIndexer metadataIndexer, ILogger<ERC721Indexer> logger) : 
         base(store, tokenService, logger)
@@ -29,6 +30,15 @@ public sealed class ERC1155Indexer : ERCTokenIndexer
         _metadataProcessors = metadataProcessors;
         _metadataIndexer = metadataIndexer;
         _logger = logger;
+
+        _specification = new ERCSpecification
+        {
+            standardInterface = InterfaceIds.ERC1155,
+            metadataInterface = InterfaceIds.ERC1155Metadata,
+            uriInterface = null,
+            nameInterface = InterfaceIds.Name,
+            symbolInterface = InterfaceIds.Symbol
+        };
     }
 
     public override async Task IndexAsync(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken)
@@ -53,12 +63,7 @@ public sealed class ERC1155Indexer : ERCTokenIndexer
             return;
         }
 
-        var features = await GetContractFeaturesAsync(web3, contractAddress, 
-            InterfaceIds.ERC1155, 
-            InterfaceIds.ERC1155Metadata, 
-            null, 
-            InterfaceIds.Name, 
-            InterfaceIds.Symbol);
+        var features = await GetContractFeaturesAsync(web3, contractAddress, _specification);
 
         // IMPORTANT: ERC1155Metadata only specifies uri(uint256), not name or symbol!
         //            But, we will still attempt to call these, even if they fail, since most ERC165 checks

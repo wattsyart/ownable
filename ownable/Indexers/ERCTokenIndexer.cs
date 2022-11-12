@@ -56,28 +56,23 @@ public abstract class ERCTokenIndexer : IBlockIndexer
 
     protected abstract Task IndexContractAddress(IWeb3 web3, string contractAddress, BigInteger tokenId, BigInteger blockNumber, IndexScope scope, CancellationToken cancellationToken);
 
-    protected async Task<ContractFeatures> GetContractFeaturesAsync(IWeb3 web3, string contractAddress,
-        byte[]? standardInterface,
-        byte[]? metadataInterface,
-        byte[]? uriInterface,
-        byte[]? nameInterface,
-        byte[]? symbolInterface)
+    protected async Task<ContractFeatures> GetContractFeaturesAsync(IWeb3 web3, string contractAddress, ERCSpecification specification)
     {
         var features = ContractFeatures.None;
 
-        if (standardInterface != null && await SupportsInterface(web3, contractAddress, standardInterface))
+        if (specification.standardInterface != null && await SupportsInterface(web3, contractAddress, specification.standardInterface))
             features |= ContractFeatures.SupportsStandard;
 
-        if (metadataInterface != null && await SupportsInterface(web3, contractAddress, metadataInterface))
+        if (specification.metadataInterface != null && await SupportsInterface(web3, contractAddress, specification.metadataInterface))
             features |= ContractFeatures.SupportsMetadata;
 
-        if (uriInterface != null && await SupportsInterface(web3, contractAddress, uriInterface))
+        if (specification.uriInterface != null && await SupportsInterface(web3, contractAddress, specification.uriInterface))
             features |= ContractFeatures.SupportsUri;
 
-        if (nameInterface != null && await SupportsInterface(web3, contractAddress, nameInterface))
+        if (specification.nameInterface != null && await SupportsInterface(web3, contractAddress, specification.nameInterface))
             features |= ContractFeatures.SupportsName;
 
-        if (symbolInterface != null && await SupportsInterface(web3, contractAddress, symbolInterface))
+        if (specification.symbolInterface != null && await SupportsInterface(web3, contractAddress, specification.symbolInterface))
             features |= ContractFeatures.SupportsSymbol;
 
         return features;
