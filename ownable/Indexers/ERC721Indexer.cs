@@ -13,15 +13,17 @@ namespace ownable.Indexers;
 public sealed class ERC721Indexer : ERCTokenIndexer
 {
     private readonly Store _store;
+    private readonly TokenService _tokenService;
     private readonly IEnumerable<IKnownContracts> _knownContracts;
     private readonly IEnumerable<IMetadataProcessor> _metadataProcessors;
     private readonly MetadataIndexer _metadataIndexer;
     private readonly ILogger<ERC721Indexer> _logger;
-
-    public ERC721Indexer(Store store, EventService eventService, IEnumerable<IKnownContracts> knownContracts, IEnumerable<IMetadataProcessor> metadataProcessors, MetadataIndexer metadataIndexer,  ILogger<ERC721Indexer> logger) :
-        base(store, eventService, logger)
+    
+    public ERC721Indexer(Store store, TokenService tokenService, IEnumerable<IKnownContracts> knownContracts, IEnumerable<IMetadataProcessor> metadataProcessors, MetadataIndexer metadataIndexer,  ILogger<ERC721Indexer> logger) :
+        base(store, tokenService, logger)
     {
         _store = store;
+        _tokenService = tokenService;
         _knownContracts = knownContracts;
         _metadataProcessors = metadataProcessors;
         _metadataIndexer = metadataIndexer;
@@ -72,13 +74,13 @@ public sealed class ERC721Indexer : ERCTokenIndexer
                 Address = contractAddress,
                 Type = "ERC721",
                 BlockNumber = blockNumber,
-                Name = await TryGetNameAsync<ERC721.NameFunction>(web3, contractAddress, features, atBlock),
-                Symbol = await TryGetSymbolAsync<ERC721.SymbolFunction>(web3, contractAddress, features, atBlock)
+                Name = await _tokenService.TryGetNameAsync<ERC721.NameFunction>(web3, contractAddress, features, atBlock),
+                Symbol = await _tokenService.TryGetSymbolAsync<ERC721.SymbolFunction>(web3, contractAddress, features, atBlock)
             };
 
             try
             {
-                var tokenUri = await TryGetTokenUriAsync<ERC721.TokenURIFunction>(web3, contractAddress, tokenId, features, atBlock);
+                var tokenUri = await _tokenService.TryGetTokenUriAsync<ERC721.TokenURIFunction>(web3, contractAddress, tokenId, features, atBlock);
                 if (tokenUri != null)
                 {
                     var foundProcessor = false;

@@ -13,10 +13,10 @@ public class ERC1155 : ContractDeploymentMessage
     public virtual string Symbol { get; set; } = null!;
 
     [Function("name", "string")]
-    public class NameFunction : FunctionMessage, IParameterlessStringFunction { }
+    public class NameFunction : FunctionMessage, ITokenNameFunction { }
 
     [Function("symbol", "string")]
-    public class SymbolFunction : FunctionMessage, IParameterlessStringFunction { }
+    public class SymbolFunction : FunctionMessage, ITokenSymbolFunction { }
 
     [Function("uri", "string")]
     public class URIFunction : FunctionMessage, ITokenUriFunction

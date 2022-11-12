@@ -38,7 +38,7 @@ internal class Commands
 
 
             var scope = IndexScope.All;
-            var service = serviceProvider.GetRequiredService<Web3Service>();
+            var service = serviceProvider.GetRequiredService<IndexService>();
             service.IndexAddressAsync(address, fromBlock, toBlock, scope, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 

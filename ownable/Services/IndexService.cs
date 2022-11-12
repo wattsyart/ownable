@@ -6,12 +6,12 @@ using ownable.Models;
 
 namespace ownable.Services;
 
-internal sealed class Web3Service
+internal sealed class IndexService
 {
     private readonly IOptionsMonitor<Web3Options> _options;
     private readonly IEnumerable<IBlockIndexer> _indexers;
     
-    public Web3Service(IOptionsMonitor<Web3Options> options, IEnumerable<IBlockIndexer> indexers)
+    public IndexService(IOptionsMonitor<Web3Options> options, IEnumerable<IBlockIndexer> indexers)
     {
         _options = options;
         _indexers = indexers;

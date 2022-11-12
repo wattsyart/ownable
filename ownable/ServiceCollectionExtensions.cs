@@ -20,7 +20,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddClientIndexingServices(this IServiceCollection services)
     {
         AddIndexingServicesCore(services);
-        services.AddScoped<EventService>();
+        services.AddScoped<TokenService>();
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IIndexableHandler, ClientIndexableHandler>());
         return services;
     }
@@ -30,8 +30,8 @@ public static class ServiceCollectionExtensions
         AddIndexingServicesCore(services);
 
         services.AddSingleton<Store>();
-        services.AddSingleton<Web3Service>();
-        services.AddSingleton<EventService>();
+        services.AddSingleton<IndexService>();
+        services.AddSingleton<TokenService>();
 
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IIndexableHandler, ServerIndexableHandler>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IKnownContracts, KnownContracts>());

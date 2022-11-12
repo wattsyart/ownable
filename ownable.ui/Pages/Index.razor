@@ -1,42 +1,44 @@
 ﻿@page "/"
 @inherits WalletComponent
+@inject TokenService TokenService
 
 <PageTitle>Ownable</PageTitle>
 
-@if (Contracts != null)
-{
-    <h2>Indexed Contracts</h2>
-    <ul>
-        @foreach (var item in Contracts)
-        {
-            <li>@item.Name</li>
-        }
-    </ul>
-}
+<form class="card card-sm">
+    <div class="card-body row no-gutters align-items-center">
+        <div class="col-auto">
+            <i class="oi oi-magnifying-glass h4 text-body"></i>
+        </div>
+        <div class="col">
+            <input @bind-value="@Account" class="form-control form-control-lg form-control-borderless" type="search" placeholder="Enter a contract address">
+        </div>
+        <div class="col-auto">
+            <button @onclick="OnSearchClicked" class="btn btn-lg btn-success" type="submit">Search</button>
+        </div>
+    </div>
+</form>
 
-@if (Received != null)
-{
-    <h2>Tokens Received</h2>
-    <ul>
-        @foreach (var item in Received)
-        {
-            <li>@item.ContractAddress: @item.TokenId at @item.BlockNumber</li>
-        }
-    </ul>
-}
+<style>
+    .form-control-borderless {
+        border: none;
+    }
+
+    .form-control-borderless:hover, .form-control-borderless:active, .form-control-borderless:focus {
+        border: none;
+        outline: none;
+        box-shadow: none;
+    }
+</style>
+
+
 
 @code
 {
-    private List<Contract>? Contracts { get; set; }
-    private List<Received>? Received { get; set; }
-
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
         HostProvider.SelectedAccountChanged += OnSelectedAccountChanged;
-
-        Contracts = await Http.GetFromJsonAsync<List<Contract>>("contracts");
     }
 
     private Task OnSelectedAccountChanged(string account)
@@ -50,5 +52,18 @@
         base.Dispose();
 
         HostProvider.SelectedAccountChanged -= OnSelectedAccountChanged;
+    }
+
+    [Parameter]
+
+    public string? Account { get; set; }
+
+    private async Task OnSearchClicked()
+    {
+        if (!string.IsNullOrWhiteSpace(Account) && HostProvider.Available)
+        {
+            var web3 = await HostProvider.GetWeb3Async();
+            
+        }
     }
 }

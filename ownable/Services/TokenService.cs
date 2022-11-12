@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Numerics;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.DTOs;
@@ -6,20 +7,78 @@ using ownable.Contracts;
 using ownable.Models.Indexed;
 using Nethereum.Web3;
 using ownable.Models;
-using ownable.Data;
-using System.Threading;
+using Nethereum.Contracts;
 
 namespace ownable.Services
 {
-    public class EventService
+    public class TokenService
     {
         private readonly IEnumerable<IIndexableHandler> _handlers;
         private readonly JsonSerializerOptions _options;
+        private readonly ILogger<TokenService> _logger;
 
-        public EventService(IEnumerable<IIndexableHandler> handlers, JsonSerializerOptions options)
+        public TokenService(IEnumerable<IIndexableHandler> handlers, JsonSerializerOptions options, ILogger<TokenService> logger)
         {
             _handlers = handlers;
             _options = options;
+            _logger = logger;
+        }
+
+        public async Task<string?> TryGetNameAsync<TNameFunction>(IWeb3 web3, string contractAddress, ContractFeatures features, BlockParameter atBlock) where TNameFunction : FunctionMessage, ITokenNameFunction, new()
+        {
+            if (features.SupportsName())
+            {
+                try
+                {
+                    var nameQuery = web3.Eth.GetContractQueryHandler<TNameFunction>();
+                    var name = await nameQuery.QueryAsync<string>(contractAddress, new TNameFunction());
+                    return name;
+                }
+                catch (Exception e)
+                {
+                    _logger.LogWarning(e, "Contract Address {ContractAddress} at block {BlockNumber} failed to fetch token name", contractAddress, atBlock);
+                }
+            }
+
+            return null;
+        }
+
+        public async Task<string?> TryGetSymbolAsync<TSymbolFunction>(IWeb3 web3, string contractAddress, ContractFeatures features, BlockParameter atBlock) where TSymbolFunction : FunctionMessage, ITokenSymbolFunction, new()
+        {
+            if (features.SupportsSymbol())
+            {
+                try
+                {
+                    var symbolQuery = web3.Eth.GetContractQueryHandler<TSymbolFunction>();
+                    var symbol = await symbolQuery.QueryAsync<string>(contractAddress, new TSymbolFunction());
+                    return symbol;
+                }
+                catch (Exception e)
+                {
+                    _logger.LogWarning(e, "Contract Address {ContractAddress} at block {BlockNumber} failed to fetch token symbol", contractAddress, atBlock);
+                }
+            }
+
+            return null;
+        }
+
+        public async Task<string?> TryGetTokenUriAsync<TTokenUriFunction>(IWeb3 web3, string contractAddress, BigInteger tokenId, ContractFeatures features, BlockParameter atBlock) where TTokenUriFunction : FunctionMessage, ITokenUriFunction, new()
+        {
+            if (features.SupportsUri())
+            {
+                try
+                {
+                    var tokenUriQuery = web3.Eth.GetContractQueryHandler<TTokenUriFunction>();
+                    var tokenUri = await tokenUriQuery.QueryAsync<string>(contractAddress, new TTokenUriFunction { TokenId = tokenId });
+                    return tokenUri;
+                }
+                catch (Exception e)
+                {
+                    _logger.LogWarning(e, "Contract Address {ContractAddress} at block {BlockNumber} failed to fetch token URI", contractAddress, atBlock);
+                }
+            }
+
+            return null;
         }
 
         public async Task<IEnumerable<Sent>> GetSentTokensAsync<TEvent>(IWeb3 web3, string account, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken, ILogger? logger = null) where TEvent : ITransferEvent, ITokenEvent, new()

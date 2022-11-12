@@ -16,10 +16,10 @@ public class ERC721 : ContractDeploymentMessage
     public virtual string BaseTokenURI { get; set; } = null!;
 
     [Function("symbol", "string")]
-    public class SymbolFunction : FunctionMessage, IParameterlessStringFunction { }
+    public class SymbolFunction : FunctionMessage, ITokenSymbolFunction { }
 
     [Function("name", "string")]
-    public class NameFunction : FunctionMessage, IParameterlessStringFunction { }
+    public class NameFunction : FunctionMessage, ITokenNameFunction { }
 
     [Function("tokenURI", "string")]
     public class TokenURIFunction : FunctionMessage, ITokenUriFunction
