@@ -24,6 +24,6 @@ internal sealed class IndexService
         var web3 = new Web3(client);
 
         foreach (var indexer in _indexers)
-            await indexer.IndexAsync(web3, address, fromBlock, toBlock, scope, cancellationToken);
+            await indexer.IndexAccountAsync(web3, address, fromBlock, toBlock, scope, cancellationToken);
     }
 }

@@ -40,15 +40,12 @@ public sealed class ERC721Indexer : ERCTokenIndexer
         };
     }
 
-    public override async Task IndexAsync(IWeb3 web3, string rootAddress, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken)
+    public override async Task IndexAccountAsync(IWeb3 web3, string account, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken)
     {
-        if (scope.HasFlagFast(IndexScope.TokenTransfers))
-        {
-            await IndexTransfersAsync<ERC721.Transfer>(web3, rootAddress, fromBlock, toBlock, scope, cancellationToken);
-        }
+        await IndexTransfersAsync<ERC721.Transfer>(web3, account, fromBlock, toBlock, scope, cancellationToken);
     }
 
-    protected override async Task IndexContractAddress(IWeb3 web3, string contractAddress, BigInteger tokenId, BigInteger blockNumber, IndexScope scope, CancellationToken cancellationToken)
+    protected override async Task IndexTokenContractAsync(IWeb3 web3, string contractAddress, BigInteger tokenId, BigInteger blockNumber, IndexScope scope, CancellationToken cancellationToken)
     {
         var atBlock = blockNumber.ToBlockParameter();
 

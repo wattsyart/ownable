@@ -26,27 +26,20 @@ public sealed class MetadataIndexer
 
     public async Task IndexAsync(JsonTokenMetadata metadata, string contractAddress, BigInteger tokenId, BigInteger blockNumber, IndexScope scope, CancellationToken cancellationToken)
     {
-        if (scope.HasFlagFast(IndexScope.TokenMetadataAttributes))
+        if (scope.HasFlagFast(IndexScope.TokenMetadataAttributes) && metadata.Attributes != null)
         {
-            if (metadata.Attributes != null)
+            foreach (var attribute in metadata.Attributes)
             {
-                foreach (var attribute in metadata.Attributes)
+                _store.Save(new Trait
                 {
-                    var trait = new Trait
-                    {
-                        Type = attribute.TraitType,
-                        Value = attribute.Value,
-                        TokenId = tokenId,
-                        BlockNumber = blockNumber
-                    };
-
-                    _store.Save(trait, cancellationToken);
-                }
+                    Type = attribute.TraitType,
+                    Value = attribute.Value,
+                    TokenId = tokenId,
+                    BlockNumber = blockNumber
+                }, cancellationToken);
             }
         }
 
-        return;
-        
         foreach (var processor in _imageProcessors)
         {
             if (!processor.CanProcess(metadata))
@@ -65,7 +58,7 @@ public sealed class MetadataIndexer
             {
                 foreach (var handler in _imageHandlers)
                 {
-                    if (await handler.HandleAsync(stream, contractAddress, tokenId, blockNumber, extension, cancellationToken))
+                    if (await handler.HandleAsync(stream, contractAddress, tokenId, blockNumber, extension, scope, cancellationToken))
                         break;
                 }
             }
