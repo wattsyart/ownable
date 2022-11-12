@@ -10,13 +10,18 @@
             <i class="oi oi-magnifying-glass h4 text-body"></i>
         </div>
         <div class="col">
-            <input @bind-value="@Account" class="form-control form-control-lg form-control-borderless" type="search" placeholder="Enter a contract address">
+            <input @bind-value="@Address" class="form-control form-control-lg form-control-borderless" type="search" placeholder="Enter a contract address">
         </div>
         <div class="col-auto">
-            <button @onclick="OnSearchClicked" class="btn btn-lg btn-success" type="submit">Search</button>
+            <button @onclick="OnSearchClicked" @onclick:preventDefault="true" @onclick:stopPropagation="true" class="btn btn-lg btn-success">Search</button>
         </div>
     </div>
 </form>
+
+@if (Contract != null)
+{
+    <h2>@Contract.Name (@Contract.Symbol)</h2>
+}
 
 <style>
     .form-control-borderless {
@@ -30,10 +35,10 @@
     }
 </style>
 
-
-
 @code
 {
+    public Contract? Contract { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
@@ -56,14 +61,21 @@
 
     [Parameter]
 
-    public string? Account { get; set; }
+    public string? Address { get; set; }
 
     private async Task OnSearchClicked()
     {
-        if (!string.IsNullOrWhiteSpace(Account) && HostProvider.Available)
+        if (!string.IsNullOrWhiteSpace(Address) && HostProvider.Available)
         {
             var web3 = await HostProvider.GetWeb3Async();
-            
+
+            var contract = new Contract();
+            var atBlock = BlockParameter.CreateLatest();
+
+            contract.Name = await TokenService.TryGetNameAsync<ERC721.NameFunction>(web3, Address, ContractFeatures.SupportsName, atBlock);
+            contract.Symbol = await TokenService.TryGetSymbolAsync<ERC721.SymbolFunction>(web3, Address, ContractFeatures.SupportsSymbol, atBlock);
+
+            Contract = contract;
         }
     }
 }

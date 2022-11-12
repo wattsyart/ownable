@@ -156,5 +156,34 @@ namespace ownable.Services
 
             return received;
         }
+
+        public async Task<ContractFeatures> GetContractFeaturesAsync(IWeb3 web3, string contractAddress, ERCSpecification specification)
+        {
+            var features = ContractFeatures.None;
+
+            if (specification.standardInterface != null && await SupportsInterface(web3, contractAddress, specification.standardInterface))
+                features |= ContractFeatures.SupportsStandard;
+
+            if (specification.metadataInterface != null && await SupportsInterface(web3, contractAddress, specification.metadataInterface))
+                features |= ContractFeatures.SupportsMetadata;
+
+            if (specification.uriInterface != null && await SupportsInterface(web3, contractAddress, specification.uriInterface))
+                features |= ContractFeatures.SupportsUri;
+
+            if (specification.nameInterface != null && await SupportsInterface(web3, contractAddress, specification.nameInterface))
+                features |= ContractFeatures.SupportsName;
+
+            if (specification.symbolInterface != null && await SupportsInterface(web3, contractAddress, specification.symbolInterface))
+                features |= ContractFeatures.SupportsSymbol;
+
+            return features;
+        }
+
+        private static async Task<bool> SupportsInterface(IWeb3 web3, string contractAddress, byte[] interfaceId)
+        {
+            var supportsInterfaceQuery = web3.Eth.GetContractQueryHandler<ERC165.SupportsInterfaceFunction>();
+            var supportsInterface = await supportsInterfaceQuery.QueryAsync<bool>(contractAddress, new ERC165.SupportsInterfaceFunction { InterfaceId = interfaceId });
+            return supportsInterface;
+        }
     }
 }
