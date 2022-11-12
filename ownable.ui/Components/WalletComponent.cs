@@ -39,7 +39,6 @@ public abstract class WalletComponent : ComponentBase, IDisposable
         HostProvider.NetworkChanged += NetworkChanged;
     }
 
-    [JSInvokable]
     private Task EnabledChanged(bool enabled)
     {
         Logger?.LogDebug("WalletComponent: received EnabledChanged ({Enabled})", enabled);
@@ -47,7 +46,6 @@ public abstract class WalletComponent : ComponentBase, IDisposable
         return Task.CompletedTask;
     }
 
-    [JSInvokable]
     private Task AvailabilityChanged(bool available)
     {
         Logger?.LogDebug("WalletComponent: received AvailabilityChanged ({Available})", available);
@@ -55,7 +53,6 @@ public abstract class WalletComponent : ComponentBase, IDisposable
         return Task.CompletedTask;
     }
 
-    [JSInvokable]
     private async Task SelectedAccountChanged(string account)
     {
         Logger?.LogDebug("WalletComponent: received SelectedAccountChanged ({Account})", account);
@@ -63,7 +60,6 @@ public abstract class WalletComponent : ComponentBase, IDisposable
         StateHasChanged();
     }
 
-    [JSInvokable]
     private Task NetworkChanged(Network network)
     {
         Logger?.LogDebug("WalletComponent: received NetworkChanged ({Network})", network);

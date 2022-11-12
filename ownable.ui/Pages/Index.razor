@@ -1,6 +1,5 @@
 ﻿@page "/"
 @inherits WalletComponent
-@inject EventService EventService
 
 <PageTitle>Ownable</PageTitle>
 
@@ -40,17 +39,10 @@
         Contracts = await Http.GetFromJsonAsync<List<Contract>>("contracts");
     }
 
-    private async Task OnSelectedAccountChanged(string account)
+    private Task OnSelectedAccountChanged(string account)
     {
         Logger?.LogInformation("Account changed to {Account}", account);
-        var web3 = await HostProvider.GetWeb3Async();
-
-        var fromBlock = BlockParameter.CreateEarliest();
-        var toBlock = BlockParameter.CreateLatest();
-        var received = await EventService.GetReceivedTokensAsync<ERC721.Transfer>(web3, account, fromBlock: fromBlock, toBlock: toBlock, CancellationToken.None, Logger);
-        Received = received.ToList();
-
-        Logger?.LogInformation("Found {Count} received tokens from {FromBlock} to {ToBlock}", Received?.Count, fromBlock.BlockNumber?.ToString() ?? "earliest", toBlock.BlockNumber?.ToString() ?? "latest");
+        return Task.CompletedTask;
     }
 
     public override void Dispose()
