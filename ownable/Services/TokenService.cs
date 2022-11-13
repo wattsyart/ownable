@@ -157,6 +157,42 @@ namespace ownable.Services
             return received;
         }
 
+        public async Task<IEnumerable<Received>> GetContractMintedTokensAsync<TEvent>(IWeb3 web3, string contractAddress, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken, ILogger? logger = null) 
+            where TEvent : ITransferEvent, ITokenEvent, new()
+        {
+            logger?.LogInformation("Starting event fetch");
+
+            var eventType = new Event<TEvent>(web3.Client, contractAddress);
+            var filter = eventType.CreateFilterInput(new object[] { "0x0000000000000000000000000000000000000000" }, filterTopic2: null);
+            filter.FromBlock = fromBlock;
+            filter.ToBlock = toBlock;
+
+            var transferChangeLog = (await eventType.GetAllChangesAsync(filter)).ToList();
+            logger?.LogInformation("Fetched {Count} changes from filter", transferChangeLog.Count);
+
+            var received = new List<Received>();
+            foreach (var change in transferChangeLog)
+            {
+                if (change is not { Event.From: "0x0000000000000000000000000000000000000000" })
+                    continue;
+                if (!change.Log.Address.Equals(contractAddress, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var tokenId = change.Event.GetTokenId();
+                var blockNumber = change.Log.BlockNumber;
+
+                received.Add(new Received
+                {
+                    BlockNumber = blockNumber,
+                    ContractAddress = contractAddress,
+                    Address = change.Event.To,
+                    TokenId = new HexBigInteger(tokenId)
+                });
+            }
+
+            return received;
+        }
+
         public async Task<ContractFeatures> GetContractFeaturesAsync(IWeb3 web3, string contractAddress, ERCSpecification specification)
         {
             var features = ContractFeatures.None;

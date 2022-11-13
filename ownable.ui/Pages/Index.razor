@@ -21,6 +21,16 @@
 @if (Contract != null)
 {
     <h2>@Contract.Name (@Contract.Symbol)</h2>
+
+    if (ContractTokens != null)
+    {
+        foreach (var token in ContractTokens)
+        {
+            <div class="card card-sm">
+                @token.TokenId
+            </div>
+        }
+    }
 }
 
 <style>
@@ -38,6 +48,7 @@
 @code
 {
     public Contract? Contract { get; set; }
+    public List<Received>? ContractTokens { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -67,15 +78,24 @@
     {
         if (!string.IsNullOrWhiteSpace(Address) && HostProvider.Available)
         {
+            Logger?.LogInformation("Fetching collection...");
+
             var web3 = await HostProvider.GetWeb3Async();
+            var fromBlock = BlockParameter.CreateEarliest();
+            var toBlock = BlockParameter.CreateLatest();
 
             var contract = new Contract();
-            var atBlock = BlockParameter.CreateLatest();
-
-            contract.Name = await TokenService.TryGetNameAsync<ERC721.NameFunction>(web3, Address, ContractFeatures.SupportsName, atBlock);
-            contract.Symbol = await TokenService.TryGetSymbolAsync<ERC721.SymbolFunction>(web3, Address, ContractFeatures.SupportsSymbol, atBlock);
+            contract.Address = Address;
+            contract.Name = await TokenService.TryGetNameAsync<ERC721.NameFunction>(web3, Address, ContractFeatures.SupportsName, toBlock);
+            contract.Symbol = await TokenService.TryGetSymbolAsync<ERC721.SymbolFunction>(web3, Address, ContractFeatures.SupportsSymbol, toBlock);
 
             Contract = contract;
+
+            if (Contract != null && !string.IsNullOrWhiteSpace(Contract.Address))
+            {
+                var allTokens = await TokenService.GetContractMintedTokensAsync<ERC721.Transfer>(web3, contract.Address!, fromBlock, toBlock, CancellationToken.None, Logger);
+                ContractTokens = allTokens.ToList();
+            }
         }
     }
 }
