@@ -26,4 +26,14 @@ internal sealed class IndexService
         foreach (var indexer in _indexers)
             await indexer.IndexAccountAsync(web3, address, fromBlock, toBlock, scope, cancellationToken);
     }
+
+    public async Task IndexCollectionAsync(string address, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken)
+    {
+        var uri = new Uri(_options.CurrentValue.RpcUrl!);
+        var client = new RpcClient(uri);
+        var web3 = new Web3(client);
+
+        foreach (var indexer in _indexers)
+            await indexer.IndexCollectionAsync(web3, address, fromBlock, toBlock, scope, cancellationToken);
+    }
 }

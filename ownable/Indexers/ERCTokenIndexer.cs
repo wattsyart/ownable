@@ -5,6 +5,7 @@ using Nethereum.Web3;
 using ownable.Contracts;
 using ownable.Data;
 using ownable.Models;
+using ownable.Models.Indexed;
 using ownable.Services;
 
 namespace ownable.Indexers;
@@ -24,6 +25,15 @@ public abstract class ERCTokenIndexer : IBlockIndexer
 
     public abstract Task IndexAccountAsync(IWeb3 web3, string account, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken);
 
+    public async Task IndexCollectionAsync<TEvent>(IWeb3 web3, string contractAddress, BlockParameter fromBlock, BlockParameter toBlock,
+        IndexScope scope, CancellationToken cancellationToken) where TEvent : ITokenEvent, ITransferEvent, new()
+    {
+        string? continuationToken = null;
+        var page = await _tokenService.GetMintedTokensAsync<TEvent>(web3, contractAddress, fromBlock, toBlock, cancellationToken, continuationToken, _logger);
+        foreach (var token in page.Value ?? Enumerable.Empty<Received>())
+            await IndexTokenAsync(web3, contractAddress, token.TokenId, token.BlockNumber, scope, cancellationToken);
+    }
+
     protected async Task IndexTransfersAsync<TEvent>(IWeb3 web3, string account, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken) where TEvent : ITokenEvent, ITransferEvent, new()
     {
         await IndexReceivedAsync<TEvent>(web3, account, fromBlock, toBlock, scope, cancellationToken);
@@ -35,8 +45,11 @@ public abstract class ERCTokenIndexer : IBlockIndexer
     {
         var receivedTokens = await _tokenService.GetReceivedTokensAsync<TEvent>(web3, account, fromBlock: fromBlock, toBlock: toBlock, cancellationToken, _logger);
 
-        foreach (var received in receivedTokens)
-            await IndexTokenAsync(web3, received.ContractAddress, received.TokenId, received.BlockNumber, scope, cancellationToken);
+        if (scope.HasFlagFast(IndexScope.TokenTransfers))
+        {
+            foreach (var sent in receivedTokens)
+                _store.Save(sent, cancellationToken);
+        }
     }
 
     protected async Task IndexSentAsync<TEvent>(IWeb3 web3, string account, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken) 
@@ -44,8 +57,11 @@ public abstract class ERCTokenIndexer : IBlockIndexer
     {
         var sentTokens = await _tokenService.GetSentTokensAsync<TEvent>(web3, account, fromBlock: fromBlock, toBlock: toBlock, cancellationToken, _logger);
 
-        foreach (var sent in sentTokens)
-            await IndexTokenAsync(web3, sent.ContractAddress, sent.TokenId, sent.BlockNumber, scope, cancellationToken);
+        if (scope.HasFlagFast(IndexScope.TokenTransfers))
+        {
+            foreach (var sent in sentTokens)
+                _store.Save(sent, cancellationToken);
+        }
     }
 
     protected abstract Task IndexTokenAsync(IWeb3 web3, string contractAddress, BigInteger tokenId, BigInteger blockNumber, IndexScope scope, CancellationToken cancellationToken);

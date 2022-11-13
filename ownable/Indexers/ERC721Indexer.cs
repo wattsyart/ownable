@@ -105,13 +105,16 @@ public sealed class ERC721Indexer : ERCTokenIndexer
                 _logger.LogWarning(e, "Contract Address {ContractAddress} failed to fetch token URI", contractAddress);
             }
 
-            try
+            if (scope.HasFlagFast(IndexScope.TokenContracts))
             {
-                _store.Append(contract, cancellationToken);
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Error trying to index contract with address {ContractAddress}", contractAddress);
+                try
+                {
+                    _store.Append(contract, cancellationToken);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "Error trying to index contract with address {ContractAddress}", contractAddress);
+                }
             }
         }
     }
