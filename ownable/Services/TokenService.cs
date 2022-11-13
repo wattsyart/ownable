@@ -172,6 +172,7 @@ namespace ownable.Services
             if (!string.IsNullOrWhiteSpace(continuationToken))
             {
                 filterId = _queryStore.GetQuery(continuationToken).FilterId;
+                logger?.LogInformation("Using filter ID {FilterId} from continuation token {ContinuationToken}", filterId, continuationToken);
             }
             else
             {
@@ -180,10 +181,12 @@ namespace ownable.Services
                 mintedFilter.ToBlock = toBlock;
 
                 filterId = await contractEvents.CreateFilterAsync(mintedFilter);
+                logger?.LogInformation("Using filter ID {FilterId} from new filter", filterId);
             }
-
+            
             var changes = await contractEvents.GetAllChangesAsync(filterId);
-            logger?.LogInformation("Fetched {Count} changes from filter", changes.Count);
+            logger?.LogInformation("Fetched {Count} changes from filter in range {FromBlock} to {ToBlock}", changes.Count, 
+                fromBlock.ToDisplayString(), toBlock.ToDisplayString());
 
             var received = new List<Received>();
             foreach (var change in changes)

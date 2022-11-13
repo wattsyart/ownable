@@ -10,5 +10,19 @@ namespace ownable.Models
         {
             return new BlockParameter(new HexBigInteger(blockNumber));
         }
+
+        public static string ToDisplayString(this BlockParameter blockParameter)
+        {
+            return blockParameter.ParameterType switch
+            {
+                BlockParameter.BlockParameterType.latest => "latest",
+                BlockParameter.BlockParameterType.earliest => "earliest",
+                BlockParameter.BlockParameterType.pending => "pending",
+                BlockParameter.BlockParameterType.finalized => "finalized",
+                BlockParameter.BlockParameterType.safe => "safe",
+                BlockParameter.BlockParameterType.blockNumber => blockParameter.BlockNumber.Value.ToString(),
+                _ => throw new ArgumentOutOfRangeException()
+            };
+        }
     }
 }

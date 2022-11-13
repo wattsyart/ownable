@@ -31,6 +31,11 @@
             </div>
         }
     }
+
+    if (!string.IsNullOrWhiteSpace(NextPage))
+    {
+        <button class="btn btn-secondary" @onclick="OnMoreClicked">More (@NextPage)</button>
+    }
 }
 
 <style>
@@ -49,13 +54,18 @@
 {
     public Contract? Contract { get; set; }
     public List<Received>? ContractTokens { get; set; }
+    public string? Address { get; set; }
     public string? NextPage { get; set; }
+    public BlockParameter FromBlock { get; set; } = null!;
+    public BlockParameter ToBlock { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
         HostProvider.SelectedAccountChanged += OnSelectedAccountChanged;
+        FromBlock = BlockParameter.CreateEarliest();
+        ToBlock = BlockParameter.CreateLatest();
     }
 
     private Task OnSelectedAccountChanged(string account)
@@ -71,33 +81,45 @@
         HostProvider.SelectedAccountChanged -= OnSelectedAccountChanged;
     }
 
-    [Parameter]
-
-    public string? Address { get; set; }
-
     private async Task OnSearchClicked()
+    {
+        await FetchMintedTokensAsync();
+    }
+
+    private async Task FetchMintedTokensAsync()
     {
         if (!string.IsNullOrWhiteSpace(Address) && HostProvider.Available)
         {
             Logger?.LogInformation("Fetching collection...");
 
             var web3 = await HostProvider.GetWeb3Async();
-            var fromBlock = BlockParameter.CreateEarliest();
-            var toBlock = BlockParameter.CreateLatest();
 
-            var contract = new Contract();
-            contract.Address = Address;
-            contract.Name = await TokenService.TryGetNameAsync<ERC721.NameFunction>(web3, Address, ContractFeatures.SupportsName, toBlock);
-            contract.Symbol = await TokenService.TryGetSymbolAsync<ERC721.SymbolFunction>(web3, Address, ContractFeatures.SupportsSymbol, toBlock);
-
-            Contract = contract;
-
-            if (Contract != null && !string.IsNullOrWhiteSpace(Contract.Address))
+            if (Contract == null)
             {
-                var page = await TokenService.GetMintedTokensAsync<ERC721.Transfer>(web3, contract.Address!, fromBlock, toBlock, CancellationToken.None, NextPage, Logger);
-                ContractTokens = page.Value;
-                NextPage = page.NextPage;
+                var contract = new Contract();
+                contract.Address = Address;
+                contract.Name = await TokenService.TryGetNameAsync<ERC721.NameFunction>(web3, Address, ContractFeatures.SupportsName, ToBlock);
+                contract.Symbol = await TokenService.TryGetSymbolAsync<ERC721.SymbolFunction>(web3, Address, ContractFeatures.SupportsSymbol, ToBlock);
+                Contract = contract;
             }
+
+            await GetTokenPageAsync(web3);
         }
+    }
+
+    private async Task GetTokenPageAsync(IWeb3 web3)
+    {
+        if (Contract != null && !string.IsNullOrWhiteSpace(Contract.Address))
+        {
+            var page = await TokenService.GetMintedTokensAsync<ERC721.Transfer>(web3, Contract.Address, FromBlock, ToBlock, CancellationToken.None, NextPage, Logger);
+            ContractTokens = page.Value;
+            NextPage = page.NextPage;
+        }
+    }
+
+    private async Task OnMoreClicked()
+    {
+        var web3 = await HostProvider.GetWeb3Async();
+        await GetTokenPageAsync(web3);
     }
 }
