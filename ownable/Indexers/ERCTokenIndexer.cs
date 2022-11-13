@@ -25,6 +25,9 @@ public abstract class ERCTokenIndexer : IBlockIndexer
 
     public abstract Task IndexAccountAsync(IWeb3 web3, string account, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken);
 
+    public abstract Task IndexCollectionAsync(IWeb3 web3, string contractAddress, BlockParameter fromBlock, BlockParameter toBlock,
+        IndexScope scope, CancellationToken cancellationToken);
+
     public async Task IndexCollectionAsync<TEvent>(IWeb3 web3, string contractAddress, BlockParameter fromBlock, BlockParameter toBlock,
         IndexScope scope, CancellationToken cancellationToken) where TEvent : ITokenEvent, ITransferEvent, new()
     {

@@ -35,6 +35,12 @@ public sealed class ERC721Indexer : ERCTokenIndexer
         await IndexTransfersAsync<ERC721.Transfer>(web3, account, fromBlock, toBlock, scope, cancellationToken);
     }
 
+    public override async Task IndexCollectionAsync(IWeb3 web3, string contractAddress, BlockParameter fromBlock, BlockParameter toBlock,
+        IndexScope scope, CancellationToken cancellationToken)
+    {
+        await IndexCollectionAsync<ERC721.Transfer>(web3, contractAddress, fromBlock, toBlock, scope, cancellationToken);
+    }
+
     protected override async Task IndexTokenAsync(IWeb3 web3, string contractAddress, BigInteger tokenId, BigInteger blockNumber, IndexScope scope, CancellationToken cancellationToken)
     {
         var atBlock = blockNumber.ToBlockParameter();
@@ -75,6 +81,18 @@ public sealed class ERC721Indexer : ERCTokenIndexer
                 Symbol = await _tokenService.TryGetSymbolAsync<ERC721.SymbolFunction>(web3, contractAddress, features, atBlock)
             };
 
+            if (scope.HasFlagFast(IndexScope.TokenContracts))
+            {
+                try
+                {
+                    _store.Append(contract, cancellationToken);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "Error trying to index contract with address {ContractAddress}", contractAddress);
+                }
+            }
+
             try
             {
                 var tokenUri = await _tokenService.TryGetTokenUriAsync<ERC721.TokenURIFunction>(web3, contractAddress, tokenId, features, atBlock);
@@ -105,17 +123,7 @@ public sealed class ERC721Indexer : ERCTokenIndexer
                 _logger.LogWarning(e, "Contract Address {ContractAddress} failed to fetch token URI", contractAddress);
             }
 
-            if (scope.HasFlagFast(IndexScope.TokenContracts))
-            {
-                try
-                {
-                    _store.Append(contract, cancellationToken);
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, "Error trying to index contract with address {ContractAddress}", contractAddress);
-                }
-            }
+            
         }
     }
 }

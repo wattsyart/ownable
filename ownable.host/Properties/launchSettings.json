@@ -1,9 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
-    "index.account": {
+    "index.collection": {
       "commandName": "Project",
-      "commandLineArgs": "--stat version --index 0x16cCd2a1346978e27FDCbda43569E251C4227341",
+      "commandLineArgs": "--stat version --index-collection 0x0a278d4c904c4ce1bba91cdc0c3ec2b14307c67c",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

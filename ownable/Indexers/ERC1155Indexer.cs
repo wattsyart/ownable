@@ -37,6 +37,13 @@ public sealed class ERC1155Indexer : ERCTokenIndexer
         await IndexTransfersAsync<ERC1155.TransferBatch>(web3, account, fromBlock, toBlock, scope, cancellationToken);
     }
 
+    public override async Task IndexCollectionAsync(IWeb3 web3, string contractAddress, BlockParameter fromBlock, BlockParameter toBlock,
+        IndexScope scope, CancellationToken cancellationToken)
+    {
+        await IndexCollectionAsync<ERC1155.TransferSingle>(web3, contractAddress, fromBlock, toBlock, scope, cancellationToken);
+        await IndexCollectionAsync<ERC1155.TransferBatch>(web3, contractAddress, fromBlock, toBlock, scope, cancellationToken);
+    }
+
     protected override async Task IndexTokenAsync(IWeb3 web3, string contractAddress, BigInteger tokenId, BigInteger blockNumber, IndexScope scope, CancellationToken cancellationToken)
     {
         var atBlock = blockNumber.ToBlockParameter();
@@ -73,6 +80,18 @@ public sealed class ERC1155Indexer : ERCTokenIndexer
                 Symbol = await _tokenService.TryGetSymbolAsync<ERC1155.SymbolFunction>(web3, contractAddress, features, atBlock)
             };
 
+            if (scope.HasFlagFast(IndexScope.TokenContracts))
+            {
+                try
+                {
+                    _store.Append(contract, cancellationToken);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "Error trying to index contract with address {ContractAddress}", contractAddress);
+                }
+            }
+
             try
             {
                 var tokenUri = await _tokenService.TryGetTokenUriAsync<ERC1155.URIFunction>(web3, contractAddress, tokenId, features, atBlock);
@@ -102,18 +121,6 @@ public sealed class ERC1155Indexer : ERCTokenIndexer
             catch (Exception e)
             {
                 _logger.LogWarning(e, "Contract Address {ContractAddress} failed to fetch token URI", contractAddress);
-            }
-
-            if (scope.HasFlagFast(IndexScope.TokenContracts))
-            {
-                try
-                {
-                    _store.Append(contract, cancellationToken);
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, "Error trying to index contract with address {ContractAddress}", contractAddress);
-                }
             }
         }
     }
