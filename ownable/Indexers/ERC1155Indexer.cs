@@ -37,7 +37,7 @@ public sealed class ERC1155Indexer : ERCTokenIndexer
         await IndexTransfersAsync<ERC1155.TransferBatch>(web3, account, fromBlock, toBlock, scope, cancellationToken);
     }
 
-    protected override async Task IndexTokenContractAsync(IWeb3 web3, string contractAddress, BigInteger tokenId, BigInteger blockNumber, IndexScope scope, CancellationToken cancellationToken)
+    protected override async Task IndexTokenAsync(IWeb3 web3, string contractAddress, BigInteger tokenId, BigInteger blockNumber, IndexScope scope, CancellationToken cancellationToken)
     {
         var atBlock = blockNumber.ToBlockParameter();
 

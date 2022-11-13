@@ -10,7 +10,7 @@ namespace ownable;
 
 internal class Commands
 {
-    public static IConfiguration IndexAddress(IConfiguration configuration, IServiceProvider serviceProvider, Queue<string> arguments)
+    public static IConfiguration IndexAccount(IConfiguration configuration, IServiceProvider serviceProvider, Queue<string> arguments)
     {
         if (arguments.EndOfSubArguments())
         {
@@ -18,7 +18,7 @@ internal class Commands
         }
         else
         {
-            var address = arguments.Dequeue();
+            var account = arguments.Dequeue();
 
             var fromBlock = BlockParameter.CreateEarliest();
             if (!arguments.EndOfSubArguments())
@@ -36,10 +36,9 @@ internal class Commands
                     toBlock = new BlockParameter(new HexBigInteger(toValue));
             }
 
-
             var scope = IndexScope.All;
             var service = serviceProvider.GetRequiredService<IndexService>();
-            service.IndexAddressAsync(address, fromBlock, toBlock, scope, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
+            service.IndexAccountAsync(account, fromBlock, toBlock, scope, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
         return configuration;

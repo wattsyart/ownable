@@ -19,7 +19,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddClientIndexingServices(this IServiceCollection services)
     {
         AddCoreServices(services);
-        
+
         services.AddScoped<TokenService>();
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IIndexableHandler, ClientIndexableHandler>());
 
@@ -72,6 +72,7 @@ public static class ServiceCollectionExtensions
     private static void AddCoreServices(IServiceCollection services)
     {
         services.AddSingleton(_ => GetJsonSerializerOptions());
+        services.AddSingleton<QueryStore>();
     }
 
     public static JsonSerializerOptions GetJsonSerializerOptions()

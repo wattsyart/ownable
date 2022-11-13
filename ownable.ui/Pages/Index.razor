@@ -49,6 +49,7 @@
 {
     public Contract? Contract { get; set; }
     public List<Received>? ContractTokens { get; set; }
+    public string? NextPage { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -93,8 +94,9 @@
 
             if (Contract != null && !string.IsNullOrWhiteSpace(Contract.Address))
             {
-                var allTokens = await TokenService.GetContractMintedTokensAsync<ERC721.Transfer>(web3, contract.Address!, fromBlock, toBlock, CancellationToken.None, Logger);
-                ContractTokens = allTokens.ToList();
+                var page = await TokenService.GetMintedTokensAsync<ERC721.Transfer>(web3, contract.Address!, fromBlock, toBlock, CancellationToken.None, NextPage, Logger);
+                ContractTokens = page.Value;
+                NextPage = page.NextPage;
             }
         }
     }

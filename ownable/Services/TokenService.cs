@@ -14,12 +14,14 @@ namespace ownable.Services
     public class TokenService
     {
         private readonly IEnumerable<IIndexableHandler> _handlers;
+        private readonly QueryStore _queryStore;
         private readonly JsonSerializerOptions _options;
         private readonly ILogger<TokenService> _logger;
 
-        public TokenService(IEnumerable<IIndexableHandler> handlers, JsonSerializerOptions options, ILogger<TokenService> logger)
+        public TokenService(IEnumerable<IIndexableHandler> handlers, QueryStore queryStore, JsonSerializerOptions options, ILogger<TokenService> logger)
         {
             _handlers = handlers;
+            _queryStore = queryStore;
             _options = options;
             _logger = logger;
         }
@@ -157,21 +159,34 @@ namespace ownable.Services
             return received;
         }
 
-        public async Task<IEnumerable<Received>> GetContractMintedTokensAsync<TEvent>(IWeb3 web3, string contractAddress, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken, ILogger? logger = null) 
+        public async Task<Page<Received>> GetMintedTokensAsync<TEvent>(IWeb3 web3, string contractAddress, BlockParameter fromBlock, BlockParameter toBlock, CancellationToken cancellationToken, string? continuationToken, ILogger? logger = null) 
             where TEvent : ITransferEvent, ITokenEvent, new()
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             logger?.LogInformation("Starting event fetch");
 
-            var eventType = new Event<TEvent>(web3.Client, contractAddress);
-            var filter = eventType.CreateFilterInput(new object[] { "0x0000000000000000000000000000000000000000" }, filterTopic2: null);
-            filter.FromBlock = fromBlock;
-            filter.ToBlock = toBlock;
+            var contractEvents = new Event<TEvent>(web3.Client, contractAddress);
 
-            var transferChangeLog = (await eventType.GetAllChangesAsync(filter)).ToList();
-            logger?.LogInformation("Fetched {Count} changes from filter", transferChangeLog.Count);
+            HexBigInteger filterId;
+            if (!string.IsNullOrWhiteSpace(continuationToken))
+            {
+                filterId = _queryStore.GetQuery(continuationToken).FilterId;
+            }
+            else
+            {
+                var mintedFilter = contractEvents.CreateFilterInput(new object[] { "0x0000000000000000000000000000000000000000" }, filterTopic2: null);
+                mintedFilter.FromBlock = fromBlock;
+                mintedFilter.ToBlock = toBlock;
+
+                filterId = await contractEvents.CreateFilterAsync(mintedFilter);
+            }
+
+            var changes = await contractEvents.GetAllChangesAsync(filterId);
+            logger?.LogInformation("Fetched {Count} changes from filter", changes.Count);
 
             var received = new List<Received>();
-            foreach (var change in transferChangeLog)
+            foreach (var change in changes)
             {
                 if (change is not { Event.From: "0x0000000000000000000000000000000000000000" })
                     continue;
@@ -190,7 +205,15 @@ namespace ownable.Services
                 });
             }
 
-            return received;
+            var query = new Query();
+            query.FilterId = filterId;
+            continuationToken = _queryStore.CreateContinuationToken(nameof(GetMintedTokensAsync), query);
+
+            var page = new Page<Received>();
+            page.Value = received;
+            page.NextPage = continuationToken;
+
+            return page;
         }
 
         public async Task<ContractFeatures> GetContractFeaturesAsync(IWeb3 web3, string contractAddress, ERCSpecification specification)

@@ -17,7 +17,7 @@ internal sealed class IndexService
         _indexers = indexers;
     }
 
-    public async Task IndexAddressAsync(string address, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken)
+    public async Task IndexAccountAsync(string address, BlockParameter fromBlock, BlockParameter toBlock, IndexScope scope, CancellationToken cancellationToken)
     {
         var uri = new Uri(_options.CurrentValue.RpcUrl!);
         var client = new RpcClient(uri);
