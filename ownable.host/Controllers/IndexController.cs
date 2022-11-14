@@ -23,10 +23,7 @@ public class IndexController : Controller
             return BadRequest();
 
         foreach (var item in model)
-        {
             _store.Append(item, cancellationToken);
-        }
-
 
         return Ok();
     }

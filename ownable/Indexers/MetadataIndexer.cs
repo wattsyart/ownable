@@ -26,6 +26,19 @@ public sealed class MetadataIndexer
 
     public async Task IndexAsync(JsonTokenMetadata metadata, string contractAddress, BigInteger tokenId, BigInteger blockNumber, IndexScope scope, CancellationToken cancellationToken)
     {
+        if (scope.HasFlagFast(IndexScope.TokenMetadata))
+        {
+            _store.Save(new Metadata
+            {
+                Name = metadata.Name,
+                Description = metadata.Description,
+                ExternalUrl = metadata.ExternalUrl,
+                ContractAddress = contractAddress,
+                TokenId = tokenId,
+                BlockNumber = blockNumber
+            }, cancellationToken);
+        }
+
         if (scope.HasFlagFast(IndexScope.TokenMetadataAttributes) && metadata.Attributes != null)
         {
             foreach (var attribute in metadata.Attributes)

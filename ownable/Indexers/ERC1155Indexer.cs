@@ -53,7 +53,9 @@ public sealed class ERC1155Indexer : ERCTokenIndexer
             if (!knownContracts.TryGetContract(contractAddress, out var contract) || contract == null)
                 continue;
 
-            _store.Append(contract, cancellationToken);
+            if(scope.HasFlagFast(IndexScope.TokenContracts))
+                _store.Append(contract, cancellationToken);
+
             return;
         }
 
@@ -84,7 +86,7 @@ public sealed class ERC1155Indexer : ERCTokenIndexer
             {
                 try
                 {
-                    _store.Append(contract, cancellationToken);
+                    _store.Save(contract, cancellationToken);
                 }
                 catch (Exception e)
                 {

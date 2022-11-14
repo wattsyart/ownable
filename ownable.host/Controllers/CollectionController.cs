@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using Microsoft.AspNetCore.Mvc;
-using Nethereum.Contracts.Standards.ERC20.TokenList;
 using ownable.Data;
 using ownable.Models;
 using ownable.Models.Indexed;
@@ -31,7 +30,7 @@ public class CollectionController : Controller
         // This is hacked together, but provides a way forward for next steps in the index...
         //
         var tokenIds = GetTokenIds(contractAddress, cancellationToken);
-        foreach(var tokenId in tokenIds)
+        foreach(var tokenId in tokenIds.OrderBy(x => x))
             collectionItems.Add(await GetCollectionItemAsync(contractAddress, tokenId, cancellationToken));
         
         return Ok(collectionItems);
@@ -55,6 +54,7 @@ public class CollectionController : Controller
     private async Task<CollectionItem> GetCollectionItemAsync(string contractAddress, BigInteger tokenId, CancellationToken cancellationToken)
     {
         var traits = GetTokenTraits(contractAddress, tokenId, cancellationToken);
+        var metadata = GetTokenMetadata(contractAddress, tokenId, cancellationToken);
 
         var blockNumber = traits.First().BlockNumber;
         var extension = ".gif";
@@ -64,9 +64,29 @@ public class CollectionController : Controller
         var collectionItem = new CollectionItem
         {
             Traits = traits,
-            Media = $"data:{mediaType};base64,{media}"
+            Media = $"data:{mediaType};base64,{media}",
+            Name = metadata.Name,
+            Description = metadata.Description,
+            ExternalUrl = metadata.ExternalUrl,
+            TokenId = metadata.TokenId
         };
+
         return collectionItem;
+    }
+
+    private Metadata GetTokenMetadata(string contractAddress, BigInteger tokenId, CancellationToken cancellationToken)
+    {
+        var findByContractAddressAndTokenId = KeyBuilder.KeyLookup(typeof(Metadata), new[]
+        {
+            nameof(Metadata.ContractAddress),
+            nameof(Metadata.TokenId)
+        }, new[]
+        {
+            contractAddress,
+            tokenId.ToString()
+        });
+        var traits = _store.FindByKey<Metadata>(findByContractAddressAndTokenId, cancellationToken);
+        return traits.Single();
     }
 
     private IList<Trait> GetTokenTraits(string contractAddress, BigInteger tokenId, CancellationToken cancellationToken)

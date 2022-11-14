@@ -49,15 +49,8 @@ public sealed class ERC721Indexer : ERCTokenIndexer
         {
             if (!knownContracts.TryGetContract(contractAddress, out var contract) || contract == null)
                 continue;
-            contract.BlockNumber = blockNumber;
-            _store.Append(new Contract
-            {
-                Address = contract.Address,
-                BlockNumber = contract.BlockNumber,
-                Name = contract.Name,
-                Symbol = contract.Symbol,
-                Type = contract.Type
-            }, cancellationToken);
+            if (scope.HasFlagFast(IndexScope.TokenContracts))
+                _store.Append(contract, cancellationToken);
             return;
         }
 
@@ -85,7 +78,7 @@ public sealed class ERC721Indexer : ERCTokenIndexer
             {
                 try
                 {
-                    _store.Append(contract, cancellationToken);
+                    _store.Save(contract, cancellationToken);
                 }
                 catch (Exception e)
                 {
@@ -122,8 +115,6 @@ public sealed class ERC721Indexer : ERCTokenIndexer
             {
                 _logger.LogWarning(e, "Contract Address {ContractAddress} failed to fetch token URI", contractAddress);
             }
-
-            
         }
     }
 }
