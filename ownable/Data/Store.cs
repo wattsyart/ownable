@@ -88,12 +88,15 @@ public class Store : IDisposable
                     .ToArray()
             );
 
+        // FIELD => GUID
         foreach (var property in properties)
             Index(db, tx, KeyBuilder.IndexKey(property, indexable, key), key, options);
 
-        _logger.LogInformation("Before Append: {Count} entries", GetEntriesCount(cancellationToken));
+        // FIELDS => GUID
+        foreach(var indexKey in KeyBuilder.IndexKeys(properties, indexable, key))
+            Index(db, tx, indexKey.AsSpan(), key, options);
+
         tx.Commit();
-        _logger.LogInformation("After Append: {Count} entries", GetEntriesCount(cancellationToken));
     }
 
     private static void Index(LightningDatabase db, LightningTransaction tx, ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, PutOptions options)

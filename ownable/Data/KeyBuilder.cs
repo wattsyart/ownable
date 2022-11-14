@@ -1,4 +1,6 @@
 ﻿using System.Reflection;
+using System.Text;
+using Combinatorics.Collections;
 
 #if !PLAINSTORE
 using WyHash;
@@ -35,7 +37,37 @@ namespace ownable.Data
             var valueString = value.ToString();
             return IndexKey(type, property.Name, valueString, id);
         }
-        
+
+        public static IEnumerable<byte[]> IndexKeys(IEnumerable<PropertyInfo> properties, object target, byte[] id)
+        {
+            var type = target.GetType();
+
+            var indexKeys = new List<byte[]>();
+            foreach (var combination in new Combinations<PropertyInfo>(properties, 2, GenerateOption.WithoutRepetition))
+            {
+                var keyBuilder = new StringBuilder();
+                var valueBuilder = new StringBuilder();
+
+                foreach (var property in combination.OrderBy(x => x.Name))
+                {
+                    keyBuilder.Append(property.Name);
+
+                    var value = property.GetValue(target);
+                    value ??= "";
+
+                    var valueString = value.ToString();
+                    valueBuilder.Append(valueString);
+                }
+
+                var indexKeyKey  = keyBuilder.ToString();
+                var indexKeyValue = valueBuilder.ToString();
+                var indexKey = IndexKey(type, indexKeyKey, indexKeyValue, id);
+                indexKeys.Add(indexKey.ToArray());
+            }
+
+            return indexKeys;
+        }
+
         public static ReadOnlySpan<byte> IndexKey(Type type, string key, string? value, byte[] id)
         {
             var indexKey = KeyLookup(type, key, value)
@@ -46,6 +78,19 @@ namespace ownable.Data
         }
 
         public static ReadOnlySpan<byte> KeyLookup(Type type, string key, string? value) => KeyPrefix(type, key).Concat(ValueTag(value));
+
+        public static ReadOnlySpan<byte> KeyLookup(Type type, string[] keys, string?[] values)
+        {
+            var keyBuilder = new StringBuilder();
+            foreach (var key in keys)
+                keyBuilder.Append(key);
+
+            var valueBuilder = new StringBuilder();
+            foreach (var value in values)
+                valueBuilder.Append(value ?? "");
+
+            return KeyPrefix(type, keyBuilder.ToString()).Concat(ValueTag(valueBuilder.ToString()));
+        }
 
         private static ReadOnlySpan<byte> ValueTag(ReadOnlySpan<char> value) => Hash(value);
 
