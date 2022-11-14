@@ -2,6 +2,7 @@
 using Nethereum.JsonRpc.Client;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
+using ownable.Configuration;
 using ownable.Models;
 
 namespace ownable.Services;

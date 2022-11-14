@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using ownable.Models;
 using System.Net.Http.Headers;
 using System.Text;
+using ownable.Configuration;
 
 namespace ownable.Processors.Images;
 
@@ -120,8 +121,15 @@ internal sealed class IpfsImageProcessor : IMetadataImageProcessor
         {
             var mediaType = response.Content.Headers.ContentType?.MediaType;
             if (!string.IsNullOrWhiteSpace(mediaType) && mediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
-                extension = $".{mediaType["image/".Length..]}";
+               extension = $".{mediaType["image/".Length..]}";
+
+            _logger.LogInformation("Determined IPFS CID {CID} media extension to be {Extension}", cid, extension);
         }
+        else
+        {
+            _logger.LogWarning("Could not determine IPFS CID {CID} media extension, assuming {Extension} ({StatusCode})", cid, extension, response.StatusCode);
+        }
+
         return extension;
     }
 }

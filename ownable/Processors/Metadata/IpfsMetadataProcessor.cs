@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using ownable.Configuration;
 using ownable.Models;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
