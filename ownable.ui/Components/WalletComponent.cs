@@ -1,34 +1,16 @@
-﻿using System.Net.Http.Headers;
-using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
+﻿using Microsoft.AspNetCore.Components;
 using ownable.ui.Models;
-using Blazored.LocalStorage;
 
 namespace ownable.ui.Components;
 
-public abstract class WalletComponent : ComponentBase, IDisposable
+public abstract class WalletComponent : AppComponent, IDisposable
 {
-    [Inject]
-    public HttpClient Http { get; set; } = null!;
-
-    [Inject]
-    public NavigationManager Nav { get; set; } = null!;
-
-    [Inject]
-    public IJSRuntime Js { get; set; } = null!;
-
     [Inject]
     public IEthereumHostProvider HostProvider { get; set; } = null!;
 
     [Inject]
     public NethereumAuthenticator Authenticator { get; set; } = null!;
-
-    [Inject]
-    public ILocalStorageService LocalStorage { get; set; } = null!;
-
-    [Inject]
-    public ILogger<WalletComponent>? Logger { get; set; }
-
+    
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
@@ -67,18 +49,7 @@ public abstract class WalletComponent : ComponentBase, IDisposable
         return Task.CompletedTask;
     }
 
-    protected async Task TryAddHttpAuthenticationAsync(string account)
-    {
-        if (await LocalStorage.ContainKeyAsync($"JWT:{account}"))
-        {
-            var token = await LocalStorage.GetItemAsStringAsync($"JWT:{account}");
-            if (!string.IsNullOrWhiteSpace(token))
-            {
-                Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",
-                    token.Replace("\"", ""));
-            }
-        }
-    }
+    
 
     public virtual void Dispose()
     {

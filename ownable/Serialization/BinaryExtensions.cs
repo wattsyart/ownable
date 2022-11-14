@@ -43,5 +43,18 @@ namespace ownable.Serialization
             var length = br.ReadInt32();
             return new BigInteger(br.ReadBytes(length));
         }
+
+        public static void Write(this BinaryWriter bw, DateTimeOffset value)
+        {
+            bw.Write(value.Ticks);
+            bw.Write(value.Offset.Ticks);
+        }
+
+        public static DateTimeOffset ReadDateTimeOffset(this BinaryReader br)
+        {
+            var ticks = br.ReadInt64();
+            var offset = br.ReadInt64();            
+            return new DateTimeOffset(ticks, TimeSpan.FromTicks(offset));
+        }
     }
 }

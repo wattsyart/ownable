@@ -1,0 +1,113 @@
+﻿@page "/logs"
+@inherits WalletComponent
+
+<h3>Logs</h3>
+
+@if (Model != null)
+{
+    <div class="btn-toolbar mb-3">
+        <div class="btn-group mr-2">
+            <button class="btn btn-primary" @onclick="_ => Try(() => _table.ToggleAllDetailsView(open: true))">Open All</button>
+            <button class="btn btn-danger" @onclick="_ => Try(() => _table.ToggleAllDetailsView(open: false))">Close All</button>
+        </div>
+        <div class="input-group mr-1">
+            <div class="input-group-prepend">
+                <div class="input-group-text">Row Number:</div>
+            </div>
+            <input type="number" @bind="_rowNumber" class="form-control">
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-primary" @onclick="_ => Try(() => _table.ToggleDetailView(_rowNumber, open: true))">Open</button>
+            <button class="btn btn-danger" @onclick="_ => Try(() => _table.ToggleDetailView(_rowNumber, open: false))">Close</button>
+        </div>
+    </div>
+
+    <Table @ref="_table" TableItem="LogEntryView" Items="Model" PageSize="15" ColumnReorder="true" ShowSearchBar="true">
+        <Column TableItem="LogEntryView" Title="Event ID" Field="@(x => x.EventId)" Sortable="true" Filterable="true" Width="10%" />
+        <Column TableItem="LogEntryView" Title="Level" Field="@(x => x.LogLevel)" Sortable="true" Filterable="true" Width="20%" />
+        <Column TableItem="LogEntryView" Title="Message" Field="@(x => x.Message!)" Sortable="true" Filterable="true" Width="20%" />
+        <Column TableItem="LogEntryView" Title="Created" Field="@(x => x.TimestampString!)" Sortable="true" Filterable="true" Width="20%" />
+        <DetailTemplate TableItem="LogEntryView">
+            @if (context.Data != null)
+            {
+                <h5>Structured Data</h5>
+                <div class="table-responsive">
+                    <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Value</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var entry in context.Data ?? Enumerable.Empty<KeyValuePair<string, string?>>())
+                    {
+                        <tr>
+                            <td>@entry.Key</td>
+                            <td>@entry.Value</td>
+                        </tr>
+                    }
+                    </tbody>
+                </div>
+            }
+            @if (context.Error != null)
+            {
+                <h5>Error</h5>
+                <div class="table-responsive">
+                    <thead>
+                    <tr>
+                        <th>@nameof(LogException.Message)</th>
+                        <th>@nameof(LogException.Source)</th>
+                        <th>@nameof(LogException.StackTrace)</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>@context.Error.Message</td>
+                        <td>@context.Error.Source</td>
+                        <td>@context.Error.StackTrace</td>
+                    </tr>
+                    </tbody>
+                </div>
+            }
+        </DetailTemplate>
+        <LoadingDataTemplate>
+            <div class="text-center">
+                <h1>Loading...</h1>
+            </div>
+        </LoadingDataTemplate>
+        <EmptyDataTemplate>
+            <div class="text-center">
+                No logs found.
+            </div>
+        </EmptyDataTemplate>
+        <Pager ShowPageNumber="true" ShowTotalCount="true" />
+    </Table>
+}
+
+@code {
+
+    private ITable<LogEntryView>? _table;
+    private int _rowNumber;
+    private string _errorMessage = "";
+
+    public IEnumerable<LogEntryView>? Model { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var entries = await GetMany<LogEntry>("api/logs");
+        Model = entries.Select(x => new LogEntryView(x));
+    }
+
+    private void Try(Action action)
+    {
+        try
+        {
+            _errorMessage = "";
+            action();
+        }
+        catch (Exception e)
+        {
+            _errorMessage = e.Message;
+        }
+    }
+}

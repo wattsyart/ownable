@@ -4,7 +4,7 @@ using ownable.Models.Indexed;
 
 namespace ownable.host.Controllers;
 
-[Route("indices")]
+[Route("api/indices")]
 public class IndexController : Controller
 {
     private readonly Store _store;

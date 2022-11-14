@@ -1,8 +1,10 @@
 using ownable;
 using ownable.host.Extensions;
 using ownable.host.Services;
+using ownable.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.AddLmdbLogging("logs");
 
 builder.Services.AddMvcCore().AddJsonOptions(x => { x.JsonSerializerOptions.MapFrom(ServiceCollectionExtensions.GetJsonSerializerOptions()); });
 builder.Services.AddHttpClient();

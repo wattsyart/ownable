@@ -4,7 +4,7 @@ using ownable.Models.Indexed;
 
 namespace ownable.host.Controllers;
 
-[Route("contracts")]
+[Route("api/contracts")]
 public class ContractController : Controller
 {
     private readonly Store _store;
