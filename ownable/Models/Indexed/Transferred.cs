@@ -1,21 +1,13 @@
 ﻿using System.Numerics;
-using Newtonsoft.Json;
 using ownable.Serialization;
-using ownable.Serialization.Converters;
 
 namespace ownable.Models.Indexed;
 
 public abstract class Transferred : Indexable
 {
-    [Indexed]
-    public string? Address { get; set; }
-
-    [Indexed]
-    public string ContractAddress { get; set; } = null!;
-
-    [Indexed]
-    [JsonConverter(typeof(BigIntegerConverter))]
-    public BigInteger TokenId { get; set; }
+    [Indexed] public string? Address { get; set; }
+    [Indexed] public string ContractAddress { get; set; } = null!;
+    [Indexed] public BigInteger TokenId { get; set; }
 
     public override void Serialize(IndexSerializeContext context)
     {

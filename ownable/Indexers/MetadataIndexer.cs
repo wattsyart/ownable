@@ -34,6 +34,7 @@ public sealed class MetadataIndexer
                 {
                     Type = attribute.TraitType,
                     Value = attribute.Value,
+                    ContractAddress = contractAddress,
                     TokenId = tokenId,
                     BlockNumber = blockNumber
                 }, cancellationToken);

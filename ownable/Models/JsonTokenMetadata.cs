@@ -23,6 +23,5 @@ public sealed class JsonTokenMetadata
     public string? ImageData { get; set; }
 
     [JsonPropertyName("attributes")]
-    [JsonConverter(typeof(EmptyStringAttributesConverter))]
     public List<JsonTokenMetadataAttribute>? Attributes { get; set; }
 }
