@@ -38,12 +38,25 @@ namespace ownable.Data
             return IndexKey(type, property.Name, valueString, id);
         }
 
-        public static IEnumerable<byte[]> IndexKeys(IEnumerable<PropertyInfo> properties, object target, byte[] id)
+        public static IEnumerable<byte[]> IndexKeys(PropertyInfo[] properties, object target, byte[] id)
         {
-            var type = target.GetType();
+            if (properties.Length == 1)
+                return new List<byte[]> { IndexKey(properties[0], target, id).ToArray() };
 
+            var type = target.GetType();
             var indexKeys = new List<byte[]>();
-            foreach (var combination in new Combinations<PropertyInfo>(properties, 2, GenerateOption.WithoutRepetition))
+            var length = properties.Length;
+
+            while (length >= 2)
+                indexKeys.AddRange(IndexKeys(type, properties, target, id, length--));
+
+            return indexKeys;
+        }
+
+        private static IEnumerable<byte[]> IndexKeys(Type type, IEnumerable<PropertyInfo> properties, object target, byte[] id, int count)
+        {
+            var indexKeys = new List<byte[]>();
+            foreach (var combination in new Combinations<PropertyInfo>(properties, count, GenerateOption.WithoutRepetition))
             {
                 var keyBuilder = new StringBuilder();
                 var valueBuilder = new StringBuilder();
@@ -59,7 +72,7 @@ namespace ownable.Data
                     valueBuilder.Append(valueString);
                 }
 
-                var indexKeyKey  = keyBuilder.ToString();
+                var indexKeyKey = keyBuilder.ToString();
                 var indexKeyValue = valueBuilder.ToString();
                 var indexKey = IndexKey(type, indexKeyKey, indexKeyValue, id);
                 indexKeys.Add(indexKey.ToArray());
@@ -82,11 +95,11 @@ namespace ownable.Data
         public static ReadOnlySpan<byte> KeyLookup(Type type, string[] keys, string?[] values)
         {
             var keyBuilder = new StringBuilder();
-            foreach (var key in keys)
+            foreach (var key in keys.OrderBy(x => x))
                 keyBuilder.Append(key);
 
             var valueBuilder = new StringBuilder();
-            foreach (var value in values)
+            foreach (var value in values.OrderBy(x => x))
                 valueBuilder.Append(value ?? "");
 
             return KeyPrefix(type, keyBuilder.ToString()).Concat(ValueTag(valueBuilder.ToString()));
