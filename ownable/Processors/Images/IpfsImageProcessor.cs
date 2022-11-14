@@ -1,5 +1,6 @@
 ﻿using Ipfs.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using ownable.Models;
 
 namespace ownable.Processors.Images;
@@ -7,11 +8,13 @@ namespace ownable.Processors.Images;
 internal sealed class IpfsImageProcessor : IMetadataImageProcessor
 {
     private readonly HttpClient _http;
+    private readonly IOptionsMonitor<IpfsOptions> _options;
     private readonly ILogger<IMetadataImageProcessor> _logger;
 
-    public IpfsImageProcessor(HttpClient http, ILogger<IMetadataImageProcessor> logger)
+    public IpfsImageProcessor(HttpClient http, IOptionsMonitor<IpfsOptions> options, ILogger<IMetadataImageProcessor> logger)
     {
         _http = http;
+        _options = options;
         _logger = logger;
     }
 
@@ -42,8 +45,8 @@ internal sealed class IpfsImageProcessor : IMetadataImageProcessor
         var cid = imageDataUri.OriginalString["ipfs://".Length..];
         var extension = await GetExtensionAsync(imageDataUri, cid, cancellationToken);
 
-        var ipfs = new IpfsClient("https://ipfs.io");
-        _logger.LogInformation("Fetching IPFS CID {CID}", cid);
+        var ipfs = new IpfsClient(_options.CurrentValue.Gateway);
+        _logger.LogInformation("Fetching IPFS CID {CID} from gateway {Gateway}", cid, _options.CurrentValue.Gateway);
         var stream = await ipfs.FileSystem.ReadFileAsync(cid, cancellationToken);
         return (stream, extension);
     }
@@ -51,7 +54,7 @@ internal sealed class IpfsImageProcessor : IMetadataImageProcessor
     private async Task<string> GetExtensionAsync(Uri imageDataUri, string cid, CancellationToken cancellationToken)
     {
         var extension = ".zip";
-        var request = new HttpRequestMessage(HttpMethod.Head, $"https://ipfs.io/ipfs/{cid}");
+        var request = new HttpRequestMessage(HttpMethod.Head, $"{_options.CurrentValue.Gateway}/ipfs/{cid}");
         var response = await _http.SendAsync(request, cancellationToken);
         if (response.IsSuccessStatusCode)
         {

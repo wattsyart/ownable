@@ -1,4 +1,4 @@
-﻿namespace ownable;
+﻿namespace ownable.Models;
 
 public class Web3Options
 {

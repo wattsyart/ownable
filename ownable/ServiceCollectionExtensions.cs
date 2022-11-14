@@ -34,6 +34,7 @@ public static class ServiceCollectionExtensions
         AddCoreServices(services);
 
         services.Configure<Web3Options>(configuration.GetSection("Web3"));
+        services.Configure<IpfsOptions>(configuration.GetSection("Ipfs"));
 
         services.AddSingleton<Store>();
         services.AddSingleton<IndexService>();
