@@ -5,7 +5,7 @@ description: Welcome to Ownable
 # Ownable
 
 {% hint style="info" %}
-If you're viewing this on GitHub, you can view a GitBook version of this document here.
+If you're viewing this on GitHub, you can view a GitBook version of this document [here](https://docs.ownable.xyz).
 {% endhint %}
 
 
