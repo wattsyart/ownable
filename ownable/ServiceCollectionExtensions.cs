@@ -40,6 +40,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<Store>();
         services.AddSingleton<IndexService>();
         services.AddSingleton<TokenService>();
+        services.AddSingleton<MediaService>();
 
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IIndexableHandler, ServerIndexableHandler>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IKnownContracts, KnownContracts>());

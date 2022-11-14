@@ -94,7 +94,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var entries = await GetMany<LogEntry>("api/logs");
+        var entries = await GetManyAsync<LogEntry>("api/logs");
         Model = entries.Select(x => new LogEntryView(x));
     }
 

@@ -26,13 +26,26 @@ public abstract class AppComponent : ComponentBase
     [Inject]
     public ILogger<WalletComponent>? Logger { get; set; }
 
-    public async Task<IEnumerable<T>> GetMany<T>(string requestUri, CancellationToken cancellationToken = default)
+    public async Task<T?> GetOneAsync<T>(string requestUri, CancellationToken cancellationToken = default)
+    {
+        var response = await Http.GetAsync(requestUri, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            return default;
+
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        Logger?.LogTrace(body);
+        var result = JsonSerializer.Deserialize<T>(body, JsonOptions);
+        return result;
+    }
+
+    public async Task<IEnumerable<T>> GetManyAsync<T>(string requestUri, CancellationToken cancellationToken = default)
     {
         var response = await Http.GetAsync(requestUri, cancellationToken);
         if (!response.IsSuccessStatusCode)
             return Enumerable.Empty<T>();
 
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        Logger?.LogTrace(body);
         var result = JsonSerializer.Deserialize<IEnumerable<T>>(body, JsonOptions);
         return result ?? Enumerable.Empty<T>();
     }

@@ -11,7 +11,7 @@ using Nethereum.Contracts;
 
 namespace ownable.Services
 {
-    public class TokenService
+    public sealed class TokenService
     {
         private readonly IEnumerable<IIndexableHandler> _handlers;
         private readonly QueryStore _queryStore;
