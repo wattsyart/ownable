@@ -1,7 +1,8 @@
-﻿using Ipfs.Http;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ownable.Models;
+using System.Net.Http.Headers;
+using System.Text;
 
 namespace ownable.Processors.Images;
 
@@ -43,18 +44,77 @@ internal sealed class IpfsImageProcessor : IMetadataImageProcessor
     private async Task<(Stream? stream, string? extension)> FetchFromIpfsAsync(CancellationToken cancellationToken, Uri imageDataUri)
     {
         var cid = imageDataUri.OriginalString["ipfs://".Length..];
-        var extension = await GetExtensionAsync(imageDataUri, cid, cancellationToken);
+        var extension = await GetExtensionAsync(cid, cancellationToken);
+        
+        Stream? stream;
+        if (!string.IsNullOrWhiteSpace(_options.CurrentValue.Endpoint))
+        {
+            stream = await GetMediaStreamFromEndpoint(cid, cancellationToken);
+        }
+        else
+        {
+            stream = await GetMediaStreamFromGateway(cid, cancellationToken);
+        }
 
-        var ipfs = new IpfsClient(_options.CurrentValue.Gateway);
-        _logger.LogInformation("Fetching IPFS CID {CID} from gateway {Gateway}", cid, _options.CurrentValue.Gateway);
-        var stream = await ipfs.FileSystem.ReadFileAsync(cid, cancellationToken);
         return (stream, extension);
     }
 
-    private async Task<string> GetExtensionAsync(Uri imageDataUri, string cid, CancellationToken cancellationToken)
+    private async Task<Stream?> GetMediaStreamFromGateway(string cid, CancellationToken cancellationToken)
+    {
+        Stream? stream;
+        _logger.LogInformation("Fetching IPFS CID {CID} from gateway {Gateway}", cid, _options.CurrentValue.Gateway);
+
+        var request = new HttpRequestMessage(HttpMethod.Get, $"{_options.CurrentValue.Gateway}/ipfs/{cid}");
+        if (!string.IsNullOrWhiteSpace(_options.CurrentValue.Username))
+        {
+            var authHeaderValue = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_options.CurrentValue.Username}:{_options.CurrentValue.Password}"));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authHeaderValue);
+        }
+
+        var response = await _http.SendAsync(request, cancellationToken);
+        if (response.IsSuccessStatusCode)
+        {
+            stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        }
+        else
+        {
+            stream = null;
+        }
+
+        return stream;
+    }
+
+    private async Task<Stream?> GetMediaStreamFromEndpoint(string cid, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Fetching IPFS CID {CID} from endpoint {Endpoint}", cid, _options.CurrentValue.Endpoint);
+
+        var requestUri = $"{_options.CurrentValue.Endpoint}/api/v0/cat?arg={cid}";
+        var request = new HttpRequestMessage(HttpMethod.Post, requestUri);
+
+        if (!string.IsNullOrWhiteSpace(_options.CurrentValue.Username))
+        {
+            var authHeaderValue = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_options.CurrentValue.Username}:{_options.CurrentValue.Password}"));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authHeaderValue);
+        }
+
+        var response = await _http.SendAsync(request, cancellationToken);
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadAsStreamAsync(cancellationToken);
+        }
+
+        return null;
+    }
+
+    private async Task<string> GetExtensionAsync(string cid, CancellationToken cancellationToken)
     {
         var extension = ".zip";
         var request = new HttpRequestMessage(HttpMethod.Head, $"{_options.CurrentValue.Gateway}/ipfs/{cid}");
+        if (!string.IsNullOrWhiteSpace(_options.CurrentValue.Username))
+        {
+            var authHeaderValue = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_options.CurrentValue.Username}:{_options.CurrentValue.Password}"));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authHeaderValue);
+        }
         var response = await _http.SendAsync(request, cancellationToken);
         if (response.IsSuccessStatusCode)
         {
