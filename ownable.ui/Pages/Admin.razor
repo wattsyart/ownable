@@ -1,0 +1,34 @@
+﻿@page "/admin"
+@inherits WalletComponent
+
+<h3>Admin</h3>
+
+<h2>Index Health</h2>
+
+<Table TableItem="IndexInfo" Items="IndexInfo" PageSize="15" ColumnReorder="true">
+    <Column TableItem="IndexInfo" Title="Name" Field="@(x => x.Name)" Sortable="true" Filterable="true" Width="10%" />
+    <Column TableItem="IndexInfo" Title="Entries" Field="@(x => x.EntriesCount)" Sortable="true" Filterable="true" Width="20%" />
+    <Column TableItem="IndexInfo" Title="Used" Field="@(x => x.UsedSize)" Sortable="true" Filterable="true" Width="20%" />
+    <Column TableItem="IndexInfo" Title="Total" Field="@(x => x.TotalSize)" Sortable="true" Filterable="true" Width="20%" />
+    <LoadingDataTemplate>
+        <div class="text-center">
+            <h1>Loading...</h1>
+        </div>
+    </LoadingDataTemplate>
+    <EmptyDataTemplate>
+        <div class="text-center">
+            No indices found.
+        </div>
+    </EmptyDataTemplate>
+    <Pager ShowPageNumber="true" ShowTotalCount="true" />
+</Table>
+
+@code {
+
+    public IEnumerable<IndexInfo>? IndexInfo { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        IndexInfo = await GetManyAsync<IndexInfo>("api/indices");
+    }
+}
