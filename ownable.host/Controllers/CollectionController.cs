@@ -85,8 +85,8 @@ public class CollectionController : Controller
             contractAddress,
             tokenId.ToString()
         });
-        var traits = _store.FindByKey<Metadata>(findByContractAddressAndTokenId, cancellationToken);
-        return traits.Single();
+        var metadata = _store.FindByKey<Metadata>(findByContractAddressAndTokenId, cancellationToken);
+        return metadata.Single();
     }
 
     private IList<Trait> GetTokenTraits(string contractAddress, BigInteger tokenId, CancellationToken cancellationToken)

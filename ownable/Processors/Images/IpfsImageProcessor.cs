@@ -4,6 +4,7 @@ using ownable.Models;
 using System.Net.Http.Headers;
 using System.Text;
 using ownable.Configuration;
+using ownable.Models.Indexed;
 
 namespace ownable.Processors.Images;
 
@@ -27,7 +28,7 @@ internal sealed class IpfsImageProcessor : IMetadataImageProcessor
                uri.Scheme.Equals("ipfs", StringComparison.OrdinalIgnoreCase);
     }
 
-    public async Task<(Stream? stream, string? extension)> ProcessAsync(JsonTokenMetadata metadata, CancellationToken cancellationToken)
+    public async Task<(Stream? stream, Media? media)> ProcessAsync(JsonTokenMetadata metadata, CancellationToken cancellationToken)
     {
         if (Uri.TryCreate(metadata.Image, UriKind.Absolute, out var imageUri))
         {
@@ -42,10 +43,10 @@ internal sealed class IpfsImageProcessor : IMetadataImageProcessor
         return (null, null);
     }
 
-    private async Task<(Stream? stream, string? extension)> FetchFromIpfsAsync(CancellationToken cancellationToken, Uri imageDataUri)
+    private async Task<(Stream? stream, Media? media)> FetchFromIpfsAsync(CancellationToken cancellationToken, Uri imageDataUri)
     {
         var cid = imageDataUri.OriginalString["ipfs://".Length..];
-        var extension = await GetExtensionAsync(cid, cancellationToken);
+        var media = await GetMediaAsync(cid, cancellationToken);
         
         Stream? stream;
         if (!string.IsNullOrWhiteSpace(_options.CurrentValue.Endpoint))
@@ -57,7 +58,7 @@ internal sealed class IpfsImageProcessor : IMetadataImageProcessor
             stream = await GetMediaStreamFromGateway(cid, cancellationToken);
         }
 
-        return (stream, extension);
+        return (stream, media);
     }
 
     private async Task<Stream?> GetMediaStreamFromGateway(string cid, CancellationToken cancellationToken)
@@ -107,9 +108,14 @@ internal sealed class IpfsImageProcessor : IMetadataImageProcessor
         return null;
     }
 
-    private async Task<string> GetExtensionAsync(string cid, CancellationToken cancellationToken)
+    private async Task<Media> GetMediaAsync(string cid, CancellationToken cancellationToken)
     {
-        var extension = ".zip";
+        var media = new Media
+        {
+            Extension = ".zip",
+            Processor = nameof(IpfsImageProcessor),
+            Path = cid
+        };
         var request = new HttpRequestMessage(HttpMethod.Head, $"{_options.CurrentValue.Gateway}/ipfs/{cid}");
         if (!string.IsNullOrWhiteSpace(_options.CurrentValue.Username))
         {
@@ -119,17 +125,17 @@ internal sealed class IpfsImageProcessor : IMetadataImageProcessor
         var response = await _http.SendAsync(request, cancellationToken);
         if (response.IsSuccessStatusCode)
         {
-            var mediaType = response.Content.Headers.ContentType?.MediaType;
-            if (!string.IsNullOrWhiteSpace(mediaType) && mediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
-               extension = $".{mediaType["image/".Length..]}";
+            media.ContentType = response.Content.Headers.ContentType?.MediaType;
 
-            _logger.LogInformation("Determined IPFS CID {CID} media extension to be {Extension}", cid, extension);
+            if (!string.IsNullOrWhiteSpace(media.ContentType) && media.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+               media.Extension = $".{media.ContentType["image/".Length..]}";
+
+            _logger.LogInformation("Determined IPFS CID {CID} media extension to be {Extension}", cid, media.Extension);
         }
         else
         {
-            _logger.LogWarning("Could not determine IPFS CID {CID} media extension, assuming {Extension} ({StatusCode})", cid, extension, response.StatusCode);
+            _logger.LogWarning("Could not determine IPFS CID {CID} media extension, assuming {Extension} ({StatusCode})", cid, media.Extension, response.StatusCode);
         }
-
-        return extension;
+        return media;
     }
 }

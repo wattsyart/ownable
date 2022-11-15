@@ -9,16 +9,14 @@ namespace ownable.Indexers;
 public sealed class MetadataIndexer
 {
     private readonly Store _store;
-    private readonly MediaIndexer _mediaIndexer;
 
     private readonly IEnumerable<IMetadataImageProcessor> _imageProcessors;
     private readonly IEnumerable<IMetadataImageHandler> _imageHandlers;
     private readonly ILogger<MetadataIndexer> _logger;
 
-    public MetadataIndexer(Store store, MediaIndexer mediaIndexer, IEnumerable<IMetadataImageProcessor> imageProcessors, IEnumerable<IMetadataImageHandler> imageHandlers, ILogger<MetadataIndexer> logger)
+    public MetadataIndexer(Store store, IEnumerable<IMetadataImageProcessor> imageProcessors, IEnumerable<IMetadataImageHandler> imageHandlers, ILogger<MetadataIndexer> logger)
     {
         _store = store;
-        _mediaIndexer = mediaIndexer;
         _imageProcessors = imageProcessors;
         _imageHandlers = imageHandlers;
         _logger = logger;
@@ -62,7 +60,12 @@ public sealed class MetadataIndexer
             var processorName = processor.GetType().Name;
             _logger.LogInformation("Processing metadata images with {ProcessorName}", processorName);
 
-            var (stream, extension) = await processor.ProcessAsync(metadata, cancellationToken);
+            var (stream, media) = await processor.ProcessAsync(metadata, cancellationToken);
+            
+            if (scope.HasFlagFast(IndexScope.TokenMedia) && media != null)
+            {
+                _store.Save(media, cancellationToken);
+            }
 
             if (stream == null)
             {
@@ -72,7 +75,7 @@ public sealed class MetadataIndexer
             {
                 foreach (var handler in _imageHandlers)
                 {
-                    if (await handler.HandleAsync(stream, contractAddress, tokenId, blockNumber, extension, scope, cancellationToken))
+                    if (await handler.HandleAsync(stream, media, contractAddress, tokenId, blockNumber, scope, cancellationToken))
                         break;
                 }
             }

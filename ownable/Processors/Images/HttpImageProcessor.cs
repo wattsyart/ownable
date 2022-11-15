@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using ownable.Models;
+using ownable.Models.Indexed;
 
 namespace ownable.Processors.Images;
 
@@ -22,18 +23,44 @@ internal sealed class HttpImageProcessor : IMetadataImageProcessor
                 uri.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase));
     }
 
-    public async Task<(Stream? stream, string? extension)> ProcessAsync(JsonTokenMetadata metadata, CancellationToken cancellationToken)
+    public async Task<(Stream? stream, Media? media)> ProcessAsync(JsonTokenMetadata metadata, CancellationToken cancellationToken)
     {
         if (Uri.TryCreate(metadata.Image, UriKind.Absolute, out var imageUri))
         {
             _logger.LogInformation("Fetching image from {Uri}", imageUri);
-            return (await _http.GetStreamAsync(imageUri, cancellationToken), Path.GetExtension(metadata.Image));
+
+            var media = new Media
+            {
+                Path = metadata.Image,
+                Processor = nameof(HttpImageProcessor),
+                Extension = Path.GetExtension(metadata.Image)
+            };
+
+            var response = await _http.GetAsync(imageUri, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return (null, null);
+
+            media.ContentType = response.Content.Headers.ContentType?.MediaType;
+            return (await response.Content.ReadAsStreamAsync(cancellationToken), media);
         }
 
         if (Uri.TryCreate(metadata.ImageData, UriKind.Absolute, out var imageDataUri))
         {
             _logger.LogInformation("Fetching image from {Uri}", imageDataUri);
-            return (await _http.GetStreamAsync(imageDataUri, cancellationToken), Path.GetExtension(metadata.ImageData));
+
+            var media = new Media
+            {
+                Path = metadata.ImageData,
+                Processor = nameof(HttpImageProcessor),
+                Extension = Path.GetExtension(metadata.Image)
+            };
+
+            var response = await _http.GetAsync(imageUri, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return (null, null);
+
+            media.ContentType = response.Content.Headers.ContentType?.MediaType;
+            return (await response.Content.ReadAsStreamAsync(cancellationToken), media);
         }
 
         return (null, null);

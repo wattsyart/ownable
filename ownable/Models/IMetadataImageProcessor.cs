@@ -1,7 +1,9 @@
-﻿namespace ownable.Models;
+﻿using ownable.Models.Indexed;
+
+namespace ownable.Models;
 
 public interface IMetadataImageProcessor
 {
     bool CanProcess(JsonTokenMetadata metadata);
-    Task<(Stream? stream, string? extension)> ProcessAsync(JsonTokenMetadata metadata, CancellationToken cancellationToken);
+    Task<(Stream? stream, Media? media)> ProcessAsync(JsonTokenMetadata metadata, CancellationToken cancellationToken);
 }

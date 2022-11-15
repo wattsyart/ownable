@@ -8,8 +8,8 @@ public enum IndexScope
     TokenContracts = 0x2,
     TokenMetadata = 0x4,
     TokenMetadataAttributes = 0x8,
-
-    All = int.MaxValue
+    TokenMedia = 0x10,
+    All = int.MaxValue,
 }
 
 public static class IndexScopeExtensions

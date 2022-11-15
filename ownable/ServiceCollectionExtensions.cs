@@ -48,7 +48,6 @@ public static class ServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IBlockIndexer, ERC721Indexer>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IBlockIndexer, ERC1155Indexer>());
         services.AddSingleton<MetadataIndexer>();
-        services.AddSingleton<MediaIndexer>();
 
         AddProcessors(services);
         AddHandlers(services);
