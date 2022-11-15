@@ -1,8 +1,8 @@
-﻿using ownable.Models;
+﻿using ownable.Logging;
 
-namespace ownable.Logging;
+namespace ownable.Models;
 
-public interface ILogStore
+public interface ILogStore : IIndex
 {
     IEnumerable<LogEntry> Get(CancellationToken cancellationToken = default);
     IEnumerable<LogEntry> GetByKey(string key, CancellationToken cancellationToken = default);

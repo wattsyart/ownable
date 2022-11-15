@@ -6,12 +6,14 @@ using ownable.Serialization;
 
 namespace ownable.Logging;
 
-internal sealed class LightningLogStore : ILogStore
+internal sealed class LightningLogStore : ILogStore, IIndex
 {
     private const ushort MaxKeySizeBytes = 511;
     private readonly LightningEnvironment _env;
 
     public string Path { get; set; }
+
+    public ulong MapSize => (ulong)_env.MapSize;
 
     public LightningLogStore(string path)
     {
@@ -197,5 +199,30 @@ internal sealed class LightningLogStore : ILogStore
             var entry = new LogEntry(uuid, context);
             return entry;
         }
+    }
+
+    public ulong GetMapSizeInUse()
+    {
+        var stat = _env.EnvironmentStats;
+        return (ulong)(stat.PageSize * (stat.LeafPages + stat.BranchPages + stat.OverflowPages));
+    }
+
+    public ulong GetEntriesCount()
+    {
+        using var tx = _env.BeginTransaction(TransactionBeginFlags.ReadOnly);
+        using var db = tx.OpenDatabase(configuration: new DatabaseConfiguration { Flags = DatabaseOpenFlags.None });
+        var count = tx.GetEntriesCount(db);
+        return (ulong)count;
+    }
+
+    public IndexInfo GetInfo()
+    {
+        return new IndexInfo
+        {
+            Name = System.IO.Path.GetFileNameWithoutExtension(Path),
+            EntriesCount = GetEntriesCount(),
+            UsedSize = GetMapSizeInUse(),
+            TotalSize = MapSize
+        };
     }
 }

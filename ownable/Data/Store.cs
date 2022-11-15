@@ -13,7 +13,7 @@ namespace ownable.Data;
 using System.Text;
 #endif
 
-public class Store : IDisposable
+public class Store : IIndex, IDisposable
 {
     private readonly ILogger<Store> _logger;
     private readonly LightningEnvironment _env;
@@ -36,6 +36,8 @@ public class Store : IDisposable
     public string Path { get; set; }
     
     private const ushort MaxKeySizeBytes = 511;
+
+    public ulong MapSize => (ulong) _env.MapSize;
 
     private readonly Dictionary<Type, PropertyInfo[]> _cachedProperties = new();
 
@@ -261,13 +263,29 @@ public class Store : IDisposable
         return deserialized;
     }
 
-    public ulong GetEntriesCount(CancellationToken cancellationToken = default)
+    public ulong GetMapSizeInUse()
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        var stat = _env.EnvironmentStats;
+        return (ulong) (stat.PageSize * (stat.LeafPages + stat.BranchPages + stat.OverflowPages));
+    }
+
+    public ulong GetEntriesCount()
+    {
         using var tx = _env.BeginTransaction(TransactionBeginFlags.ReadOnly);
         using var db = tx.OpenDatabase(configuration: new DatabaseConfiguration { Flags = DatabaseOpenFlags.None });
         var count = tx.GetEntriesCount(db);
         return (ulong) count;
+    }
+
+    public IndexInfo GetInfo()
+    {
+        return new IndexInfo
+        {
+            Name = System.IO.Path.GetFileNameWithoutExtension(Path),
+            EntriesCount = GetEntriesCount(),
+            UsedSize = GetMapSizeInUse(),
+            TotalSize = MapSize
+        };
     }
 
     public void Dispose()

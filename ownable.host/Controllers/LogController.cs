@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ownable.Logging;
+using ownable.Models;
 
 namespace ownable.host.Controllers
 {

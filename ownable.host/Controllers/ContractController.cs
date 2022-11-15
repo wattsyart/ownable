@@ -19,7 +19,7 @@ public class ContractController : Controller
     [HttpGet]
     public IActionResult GetContracts(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Entries: {Count}", _store.GetEntriesCount(cancellationToken));
+        _logger.LogInformation("Entries: {Count}", _store.GetEntriesCount());
         var model = _store.Get<Contract>(cancellationToken);
         return Ok(model);
     }

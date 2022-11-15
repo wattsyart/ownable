@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ownable.Data;
+using ownable.Models;
 using ownable.Models.Indexed;
 
 namespace ownable.host.Controllers;
@@ -7,13 +8,25 @@ namespace ownable.host.Controllers;
 [Route("api/indices")]
 public class IndexController : Controller
 {
-    private readonly Store _store;
+    private readonly Store _dataStore;
+    private readonly ILogStore _logStore;
     private readonly ILogger<IndexController> _logger;
 
-    public IndexController(Store store, ILogger<IndexController> logger)
+    public IndexController(Store dataStore, ILogStore logStore, ILogger<IndexController> logger)
     {
-        _store = store;
+        _dataStore = dataStore;
+        _logStore = logStore;
         _logger = logger;
+    }
+
+    [HttpGet]
+    public IActionResult GetInfo()
+    {
+        return Ok(new List<IndexInfo>
+        {
+            _dataStore.GetInfo(),
+            _logStore.GetInfo()
+        });
     }
 
     [HttpPost]
@@ -23,7 +36,7 @@ public class IndexController : Controller
             return BadRequest();
 
         foreach (var item in model)
-            _store.Append(item, cancellationToken);
+            _dataStore.Append(item, cancellationToken);
 
         return Ok();
     }
@@ -36,7 +49,7 @@ public class IndexController : Controller
 
         foreach (var item in model)
         {
-            _store.Save(item, cancellationToken);
+            _dataStore.Save(item, cancellationToken);
         }
 
         return Ok();
