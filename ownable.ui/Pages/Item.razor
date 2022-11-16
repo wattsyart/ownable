@@ -1,0 +1,53 @@
+﻿@page "/item/{ContractAddress}/{TokenId:long}"
+@inherits AppComponent
+
+<section>
+    <div class="container">
+        <div class="row align-items-start justify-content-around">
+            <div class="sticky-lg-top col-md-9 col-lg col-xl-4 mb-5 mb-lg-0">
+                <ul class="list-group">
+                    @if (Model != null)
+                    {
+                        @foreach (var trait in Model.Traits)
+                        {
+                            <li class="list-group-item px-4 py-3 d-flex justify-content-between">
+                                <h6 class="mb-0">@(trait.Type)</h6>
+                                <div>@(trait.Value)</div>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+            
+            @if (Model != null)
+            {
+                <div class="col-xl-7 col-lg-8 col-md-9">
+                    <article class="article">
+                        <h2 class="h2">@Model.Name</h2>
+                        <p class="lead"></p>
+                        <p style="mb-5"><img class="img-fluid border shadow" src="@Model.Media" alt="@Model.Name" /></p>
+                        <p class="lead text-center">
+                            @Model.Description
+                        </p>
+                    </article>
+                </div>
+            }
+            
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public string? ContractAddress { get; set; }
+
+    [Parameter]
+    public long TokenId { get; set; }
+    
+    public CollectionItem? Model { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model = await GetOneAsync<CollectionItem>($"api/collections/{ContractAddress}/{TokenId}");
+    }
+}

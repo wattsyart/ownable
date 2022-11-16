@@ -33,7 +33,7 @@
                     <div class="card-body">
                         <h5 class="card-title">@collectionItem.Name</h5>
                         <p class="card-text">@collectionItem.Description</p>
-                        <a href="#" class="btn btn-primary">View</a>
+                        <a href="@GetItemUrl(collectionItem)" class="btn btn-primary">View</a>
                     </div>
                 </div>
             </div>
@@ -46,10 +46,12 @@
 {
     public string? ContractAddress { get; set; }
     public List<CollectionItem> CollectionItems { get; set; } = new();
-    
+
     private async Task OnSearchClicked()
     {
         CollectionItems.Clear();
         CollectionItems.AddRange(await GetManyAsync<CollectionItem>($"api/collections/{ContractAddress}"));
     }
+
+    private string GetItemUrl(CollectionItem collectionItem) => $"/item/{ContractAddress}/{collectionItem.TokenId}";
 }
