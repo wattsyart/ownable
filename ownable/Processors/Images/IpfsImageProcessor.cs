@@ -23,9 +23,7 @@ internal sealed class IpfsImageProcessor : IMetadataImageProcessor
 
     public bool CanProcess(JsonTokenMetadata metadata)
     {
-        return (Uri.TryCreate(metadata.Image, UriKind.Absolute, out var uri) ||
-                Uri.TryCreate(metadata.ImageData, UriKind.Absolute, out uri)) &&
-               uri.Scheme.Equals("ipfs", StringComparison.OrdinalIgnoreCase);
+        return metadata.HasUriImageWithSchemes("ipfs");
     }
 
     public async Task<(Stream? stream, Media? media)> ProcessAsync(JsonTokenMetadata metadata, CancellationToken cancellationToken)

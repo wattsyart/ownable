@@ -1,6 +1,4 @@
-﻿using Nethereum.RPC.Eth.DTOs;
-
-namespace ownable.Models
+﻿namespace ownable.Models
 {
     public sealed class Page<T>
     {

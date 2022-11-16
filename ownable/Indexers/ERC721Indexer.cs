@@ -6,6 +6,7 @@ using ownable.Contracts;
 using ownable.Data;
 using ownable.Models;
 using ownable.Services;
+
 using Contract = ownable.Models.Indexed.Contract;
 
 namespace ownable.Indexers;

@@ -71,7 +71,7 @@ public sealed class MetadataIndexer
             {
                 _logger.LogWarning("Processor {ProcessorName} failed to process metadata, when it reported it was capable", processorName);
             }
-            else
+            else if(media != null)
             {
                 foreach (var handler in _imageHandlers)
                 {

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ownable.Configuration;
 using ownable.Models;
+
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace ownable.Processors.Metadata;
@@ -23,8 +24,7 @@ public sealed class IpfsMetadataProcessor : IMetadataProcessor
 
     public bool CanProcess(string tokenUri)
     {
-        return Uri.TryCreate(tokenUri, UriKind.Absolute, out var uri) &&
-               uri.Scheme.Equals("ipfs", StringComparison.OrdinalIgnoreCase);
+        return tokenUri.IsValidUriWithSchemes("ipfs");
     }
 
     public async Task<JsonTokenMetadata?> ProcessAsync(string tokenUri, CancellationToken cancellationToken)
