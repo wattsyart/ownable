@@ -57,10 +57,12 @@ public static class ServiceCollectionExtensions
 
     private static void AddProcessors(IServiceCollection services)
     {
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, ArweaveMetadataProcessor>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, HttpMetadataProcessor>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, DataUriMetadataProcessor>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataProcessor, IpfsMetadataProcessor>());
 
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataImageProcessor, ArweaveImageProcessor>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataImageProcessor, HttpImageProcessor>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataImageProcessor, DataUriImageProcessor>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMetadataImageProcessor, IpfsImageProcessor>());

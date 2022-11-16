@@ -29,7 +29,7 @@ internal sealed class DataUriImageProcessor : IMetadataImageProcessor
             {
                 Path = metadata.Image,
                 ContentType = imageFormat.ContentType,
-                Processor = nameof(DataUriImageProcessor),
+                Processor = GetType().Name,
                 Extension = imageFormat.Extension
             };
 
@@ -45,7 +45,7 @@ internal sealed class DataUriImageProcessor : IMetadataImageProcessor
             {
                 Path = metadata.ImageData,
                 ContentType = imageDataFormat.ContentType,
-                Processor = nameof(DataUriImageProcessor),
+                Processor = GetType().Name,
                 Extension = imageDataFormat.Extension
             };
 

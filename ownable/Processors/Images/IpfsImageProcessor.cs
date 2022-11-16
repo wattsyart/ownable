@@ -113,7 +113,7 @@ internal sealed class IpfsImageProcessor : IMetadataImageProcessor
         var media = new Media
         {
             Extension = ".zip",
-            Processor = nameof(IpfsImageProcessor),
+            Processor = GetType().Name,
             Path = cid
         };
         var request = new HttpRequestMessage(HttpMethod.Head, $"{_options.CurrentValue.Gateway}/ipfs/{cid}");

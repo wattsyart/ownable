@@ -4,7 +4,7 @@ using ownable.Models.Indexed;
 
 namespace ownable.Processors.Images;
 
-internal sealed class HttpImageProcessor : IMetadataImageProcessor
+internal class HttpImageProcessor : IMetadataImageProcessor
 {
     private readonly HttpClient _http;
     private readonly ILogger<IMetadataImageProcessor> _logger;
@@ -15,13 +15,7 @@ internal sealed class HttpImageProcessor : IMetadataImageProcessor
         _logger = logger;
     }
 
-    public bool CanProcess(JsonTokenMetadata metadata)
-    {
-        return (Uri.TryCreate(metadata.Image, UriKind.Absolute, out var uri) ||
-                Uri.TryCreate(metadata.ImageData, UriKind.Absolute, out uri)) &&
-               (uri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase) ||
-                uri.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase));
-    }
+    public virtual bool CanProcess(JsonTokenMetadata metadata) => metadata.HasHttpImage();
 
     public async Task<(Stream? stream, Media? media)> ProcessAsync(JsonTokenMetadata metadata, CancellationToken cancellationToken)
     {
@@ -32,7 +26,7 @@ internal sealed class HttpImageProcessor : IMetadataImageProcessor
             var media = new Media
             {
                 Path = metadata.Image,
-                Processor = nameof(HttpImageProcessor),
+                Processor = GetType().Name,
                 Extension = Path.GetExtension(metadata.Image)
             };
 
@@ -51,7 +45,7 @@ internal sealed class HttpImageProcessor : IMetadataImageProcessor
             var media = new Media
             {
                 Path = metadata.ImageData,
-                Processor = nameof(HttpImageProcessor),
+                Processor = GetType().Name,
                 Extension = Path.GetExtension(metadata.Image)
             };
 

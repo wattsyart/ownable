@@ -16,11 +16,9 @@ public class HttpMetadataProcessor : IMetadataProcessor
         _logger = logger;
     }
 
-    public bool CanProcess(string tokenUri)
+    public virtual bool CanProcess(string tokenUri)
     {
-        return Uri.TryCreate(tokenUri, UriKind.Absolute, out var uri) &&
-               (uri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase) ||
-                uri.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase));
+        return tokenUri.IsValidHttpUri();
     }
 
     public async Task<JsonTokenMetadata?> ProcessAsync(string tokenUri, CancellationToken cancellationToken)

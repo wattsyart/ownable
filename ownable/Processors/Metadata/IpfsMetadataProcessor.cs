@@ -1,6 +1,5 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ownable.Configuration;
@@ -9,7 +8,7 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace ownable.Processors.Metadata;
 
-public class IpfsMetadataProcessor : IMetadataProcessor
+public sealed class IpfsMetadataProcessor : IMetadataProcessor
 {
     private readonly HttpClient _http;
     private readonly IOptionsMonitor<IpfsOptions> _options;
