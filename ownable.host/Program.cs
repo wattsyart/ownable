@@ -1,6 +1,5 @@
 using ownable;
 using ownable.host.Extensions;
-using ownable.host.Services;
 using ownable.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,7 +19,6 @@ IConfiguration Serve()
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
-    builder.Services.AddHostedService<SyncService>();
 
     var app = builder.Build();
 

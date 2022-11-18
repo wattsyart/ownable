@@ -20,6 +20,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ownable.ui", "ownable.ui\ow
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{815BFD1A-6519-4024-BF48-9A460BE79616}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ownable.dht", "ownable.dht\ownable.dht.csproj", "{8656726E-9B0D-488E-BFF9-D138A011B3D1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ownable.activitypub", "ownable.activitypub\ownable.activitypub.csproj", "{1C553171-45F8-4FB0-8741-E0FFA93C580D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,6 +50,14 @@ Global
 		{FA67579B-8CAE-41EC-ACA6-37FDB8CB06E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FA67579B-8CAE-41EC-ACA6-37FDB8CB06E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FA67579B-8CAE-41EC-ACA6-37FDB8CB06E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8656726E-9B0D-488E-BFF9-D138A011B3D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8656726E-9B0D-488E-BFF9-D138A011B3D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8656726E-9B0D-488E-BFF9-D138A011B3D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8656726E-9B0D-488E-BFF9-D138A011B3D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C553171-45F8-4FB0-8741-E0FFA93C580D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C553171-45F8-4FB0-8741-E0FFA93C580D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C553171-45F8-4FB0-8741-E0FFA93C580D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C553171-45F8-4FB0-8741-E0FFA93C580D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
