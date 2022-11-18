@@ -22,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ownable.dht\ownable.dht.csproj" />
     <ProjectReference Include="..\ownable\ownable.csproj" />
   </ItemGroup>
 
