@@ -71,17 +71,20 @@ public sealed class KademliaClient : IKademliaService, IDisposable
         return new List<KademliaNode>();
     }
 
-    public (byte[]?, List<KademliaNode>) FindValue(ReadOnlySpan<byte> key)
+    public (SpanValue?, List<KademliaNode>) FindValue(ReadOnlySpan<byte> key)
     {
-        var sent = _client!.TrySend($"FIND_VALUE {Encoding.UTF8.GetString(key)} {_nonceProvider.Next()}");
-        var response = GetResponse(_client);
         var nodes = new List<KademliaNode>();
+        if (!_client!.TrySend($"FIND_VALUE {Encoding.UTF8.GetString(key)} {_nonceProvider.Next()}"))
+            return (SpanValue.Empty, nodes);
+
+        var response = GetResponse(_client);
         if (!string.IsNullOrWhiteSpace(response))
         {
-            var payload = Encoding.UTF8.GetBytes(response);
-            return (payload, nodes);
+            var payload = Encoding.UTF8.GetBytes(response).AsSpan();
+            return (payload.AsSpanValue(), nodes);
         }
-        return (Array.Empty<byte>(), nodes);
+
+        return (SpanValue.Empty, nodes);
     }
 
     private string? GetResponse(SocketClient client)

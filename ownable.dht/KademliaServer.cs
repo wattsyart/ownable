@@ -65,9 +65,10 @@ public sealed class KademliaServer : IKademliaService, IDisposable
         {
             var tokens = message.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             var result = FindValue(Encoding.UTF8.GetBytes(tokens[1]));
-            if (result.Item1 is {Length: > 0})
+            if (result.Item1.HasValue)
             {
-                return Encoding.UTF8.GetString(result.Item1);
+                var span = result.Item1.Value.AsSpan();
+                return Encoding.UTF8.GetString(span);
             }
         }
 
@@ -89,14 +90,20 @@ public sealed class KademliaServer : IKademliaService, IDisposable
         return new List<KademliaNode>();
     }
 
-    public (byte[]?, List<KademliaNode>) FindValue(ReadOnlySpan<byte> key)
+    public (SpanValue?, List<KademliaNode>) FindValue(ReadOnlySpan<byte> key)
     {
         if (_store.TryGet(key, out var value))
         {
-            return (value.ToArray(), new List<KademliaNode>());
+            unsafe
+            {
+                fixed (byte* ptr = value)
+                {
+                    return (new SpanValue(value.Length, ptr), new List<KademliaNode>());
+                }
+            }
         }
 
-        return (Array.Empty<byte>(), new List<KademliaNode>());
+        return (SpanValue.Empty, new List<KademliaNode>());
     }
 
     public void Dispose()

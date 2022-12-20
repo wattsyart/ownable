@@ -68,7 +68,7 @@ public class KademliaStepDefinitions
         Assert.NotNull(_value);
 
         var value = _client!.FindValue(Encoding.UTF8.GetBytes(_key!));
-        Assert.Equal(value.Item1, Encoding.UTF8.GetBytes(_value!));
+        Assert.Equal(value.Item1!.Value!.AsSpan().ToArray(), Encoding.UTF8.GetBytes(_value!));
     }
 
     [When(@"I send a (.*) request")]
