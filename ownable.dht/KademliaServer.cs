@@ -1,27 +1,24 @@
 ﻿using System.Text;
 using Microsoft.Extensions.Logging;
-using ownable.store;
 
 namespace ownable.dht;
 
 public sealed class KademliaServer : IKademliaService, IDisposable
 {
-    private readonly int _port;
-    private readonly IKeyValueStore _store;
+    private readonly KademliaOptions _options;
     private readonly ILogger<KademliaServer> _logger;
 
     private SocketServer? _server;
 
-    public KademliaServer(int port, IKeyValueStore store, ILogger<KademliaServer> logger)
+    public KademliaServer(KademliaOptions options, ILogger<KademliaServer> logger)
     {
-        _port = port;
-        _store = store;
+        _options = options;
         _logger = logger;
     }
 
     public void Start()
     {
-        _server ??= new SocketServer(_port);
+        _server ??= new SocketServer(_options.Port, _options.Encoding);
     }
 
     public bool TryProcessRequest()
@@ -40,35 +37,35 @@ public sealed class KademliaServer : IKademliaService, IDisposable
     private string? HandleClientMessage(string? message)
     {
         if (string.IsNullOrWhiteSpace(message)) return message;
-        if (message.StartsWith("PING"))
+        if (message.StartsWith(Messages.Ping))
         {
             if (Ping())
             {
                 return "PONG";
             }
         }
-        else if (message.StartsWith("STORE"))
+        else if (message.StartsWith(Messages.Store))
         {
             var tokens = message.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            var key = Encoding.UTF8.GetBytes(tokens[1]);
-            var value = Encoding.UTF8.GetBytes(tokens[2]);
+            var key = _options.Encoding.GetBytes(tokens[1]);
+            var value = _options.Encoding.GetBytes(tokens[2]);
             if (Store(key, value))
             {
                 return "OK";
             }
         }
-        else if (message.StartsWith("FIND_NODE"))
+        else if (message.StartsWith(Messages.FindNode))
         {
             return "OK";
         }
-        else if (message.StartsWith("FIND_VALUE"))
+        else if (message.StartsWith(Messages.FindValue))
         {
             var tokens = message.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            var result = FindValue(Encoding.UTF8.GetBytes(tokens[1]));
+            var result = FindValue(_options.Encoding.GetBytes(tokens[1]));
             if (result.Item1.HasValue)
             {
                 var span = result.Item1.Value.AsSpan();
-                return Encoding.UTF8.GetString(span);
+                return _options.Encoding.GetString(span);
             }
         }
 
@@ -82,7 +79,7 @@ public sealed class KademliaServer : IKademliaService, IDisposable
 
     public bool Store(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
     {
-        return _store.TryPut(key, value);
+        return _options.Store.TryPut(key, value);
     }
 
     public List<KademliaNode> FindNode(ReadOnlySpan<byte> key)
@@ -92,7 +89,7 @@ public sealed class KademliaServer : IKademliaService, IDisposable
 
     public (SpanValue?, List<KademliaNode>) FindValue(ReadOnlySpan<byte> key)
     {
-        if (_store.TryGet(key, out var value))
+        if (_options.Store.TryGet(key, out var value))
         {
             unsafe
             {

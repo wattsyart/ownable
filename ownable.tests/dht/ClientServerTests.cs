@@ -1,4 +1,5 @@
-﻿using ownable.dht;
+﻿using System.Text;
+using ownable.dht;
 
 namespace ownable.tests.dht
 {
@@ -11,8 +12,8 @@ namespace ownable.tests.dht
             var scanner = new PortScanner();
             var port = scanner.GetNextAvailablePort();
 
-            var client = new SocketClient("localhost", port);
-            var server = new SocketServer(port);
+            var client = new SocketClient("localhost", port, Encoding.UTF8);
+            var server = new SocketServer(port, Encoding.UTF8);
             
             AssertRequestResponse(message, client, server);
             AssertRequestResponse(message, client, server);

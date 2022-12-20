@@ -19,6 +19,7 @@ public class KademliaStepDefinitions
     private string? _key;
     private string? _value;
     private int _port;
+    private KademliaOptions _options = null!;
 
     public KademliaStepDefinitions(IObjectContainer container)
     {
@@ -31,7 +32,16 @@ public class KademliaStepDefinitions
         _container.RegisterInstanceAs(NullLoggerFactory.Instance.CreateLogger<KademliaClient>());
         _container.RegisterInstanceAs(NullLoggerFactory.Instance.CreateLogger<KademliaServer>());
         _container.RegisterInstanceAs(NullLoggerFactory.Instance.CreateLogger<KeyValueStore>());
-        _container.RegisterInstanceAs<IKeyValueStore>(new KeyValueStore(Guid.NewGuid().ToString(), _container.Resolve<ILogger<KeyValueStore>>()));
+
+        _options = new KademliaOptions
+        {
+            Store = new KeyValueStore(Guid.NewGuid().ToString(), _container.Resolve<ILogger<KeyValueStore>>()),
+            Encoding = Encoding.UTF8,
+            NonceProvider = new NonceProvider(),
+            PortScanner = new PortScanner()
+        };
+
+        _container.RegisterInstanceAs(_options);
     }
         
     [Given(@"a Kademlia server is running")]
@@ -39,7 +49,7 @@ public class KademliaStepDefinitions
     {
         var scanner = new PortScanner();
         _port = scanner.GetNextAvailablePort();
-        _server = new KademliaServer(_port, _container.Resolve<IKeyValueStore>(),_container.Resolve<ILogger<KademliaServer>>());
+        _server = new KademliaServer(_container.Resolve<KademliaOptions>(),_container.Resolve<ILogger<KademliaServer>>());
         _server.Start();
     }
 
@@ -47,7 +57,8 @@ public class KademliaStepDefinitions
     public void GivenTheServerIsConnectedToAnotherNode()
     {
         Assert.NotNull(_server);
-        _client = new KademliaClient("localhost", _port, _container.Resolve<ILogger<KademliaClient>>());
+
+        _client = new KademliaClient(_container.Resolve<KademliaOptions>(), _container.Resolve<ILogger<KademliaClient>>());
         _client.Add(_server!);
         _client.Connect();
     }
@@ -57,7 +68,7 @@ public class KademliaStepDefinitions
     {
         _key = key;
         _value = value;
-        _result = _client!.Store(Encoding.UTF8.GetBytes(key), Encoding.UTF8.GetBytes(value));
+        _result = _client!.Store(_options.Encoding.GetBytes(key), _options.Encoding.GetBytes(value));
     }
 
     [Then(@"the value should be stored in the network")]
@@ -67,8 +78,8 @@ public class KademliaStepDefinitions
         Assert.NotNull(_key);
         Assert.NotNull(_value);
 
-        var value = _client!.FindValue(Encoding.UTF8.GetBytes(_key!));
-        Assert.Equal(value.Item1!.Value!.AsSpan().ToArray(), Encoding.UTF8.GetBytes(_value!));
+        var value = _client!.FindValue(_options.Encoding.GetBytes(_key!));
+        Assert.Equal(value.Item1!.Value!.AsSpan().ToArray(), _options.Encoding.GetBytes(_value!));
     }
 
     [When(@"I send a (.*) request")]

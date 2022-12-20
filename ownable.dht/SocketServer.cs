@@ -6,18 +6,20 @@ namespace ownable.dht;
 
 public sealed class SocketServer : IDisposable
 {
+    private readonly Encoding _encoding;
     private readonly ResponseSocket _socket;
     private readonly TimeSpan _timeout;
 
-    public SocketServer(int port)
+    public SocketServer(int port, Encoding encoding)
     {
+        _encoding = encoding;
         _socket = new ResponseSocket($"@tcp://*:{port}");
         _timeout = TimeSpan.FromSeconds(1);
     }
     
     public bool TryReceive(out string? request)
     {
-        return _socket.TryReceiveFrameString(_timeout, Encoding.UTF8, out request);
+        return _socket.TryReceiveFrameString(_timeout, _encoding, out request);
     }
 
     public bool TrySend(string response)

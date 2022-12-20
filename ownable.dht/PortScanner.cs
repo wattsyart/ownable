@@ -3,7 +3,7 @@ using System.Net.Sockets;
 
 namespace ownable.dht;
 
-public sealed class PortScanner
+public sealed class PortScanner : IPortScanner
 {
     public int GetNextAvailablePort()
     {

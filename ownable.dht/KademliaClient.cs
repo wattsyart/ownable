@@ -1,26 +1,21 @@
-﻿using System.Text;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 
 namespace ownable.dht;
 
 public sealed class KademliaClient : IKademliaService, IDisposable
 {
-    private readonly string _host;
-    private readonly int _port;
+    private readonly KademliaOptions _options;
     private readonly ILogger<KademliaClient> _logger;
     
     private SocketClient? _client;
-    private readonly INonceProvider _nonceProvider;
     private readonly List<KademliaServer> _servers;
 
     public ConnectionState ConnectionState { get; private set; }
 
-    public KademliaClient(string host, int port, ILogger<KademliaClient> logger)
+    public KademliaClient(KademliaOptions options, ILogger<KademliaClient> logger)
     {
-        _host = host;
-        _port = port;
+        _options = options;
         _logger = logger;
-        _nonceProvider = new NonceProvider();
         _servers = new List<KademliaServer>();
     }
 
@@ -31,7 +26,7 @@ public sealed class KademliaClient : IKademliaService, IDisposable
 
     public void Connect()
     {
-        _client ??= new SocketClient(_host, _port);
+        _client ??= new SocketClient(_options.Host, _options.Port, _options.Encoding);
         ConnectionState = ConnectionState.Connected;
     }
 
@@ -48,7 +43,7 @@ public sealed class KademliaClient : IKademliaService, IDisposable
 
     public bool Ping()
     {
-        if(!_client!.TrySend($"PING {_nonceProvider.Next()}"))
+        if(!_client!.TrySend($"{Messages.Ping} {_options.NonceProvider.Next()}"))
             return false;
         
         var response = GetResponse(_client);
@@ -57,7 +52,7 @@ public sealed class KademliaClient : IKademliaService, IDisposable
 
     public bool Store(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
     {
-        var request = $"STORE {Encoding.UTF8.GetString(key)} {Encoding.UTF8.GetString(value)} {_nonceProvider.Next()}";
+        var request = $"{Messages.Store} {_options.Encoding.GetString(key)} {_options.Encoding.GetString(value)} {_options.NonceProvider.Next()}";
         var sent = _client!.TrySend(request);
         var response = GetResponse(_client);
         return sent;
@@ -65,7 +60,7 @@ public sealed class KademliaClient : IKademliaService, IDisposable
 
     public List<KademliaNode> FindNode(ReadOnlySpan<byte> key)
     {
-        var request = $"FIND_NODE {Encoding.UTF8.GetString(key)} {_nonceProvider.Next()}";
+        var request = $"{Messages.FindNode} {_options.Encoding.GetString(key)} {_options.NonceProvider.Next()}";
         var sent = _client!.TrySend(request);
         var response = GetResponse(_client);
         return new List<KademliaNode>();
@@ -74,13 +69,13 @@ public sealed class KademliaClient : IKademliaService, IDisposable
     public (SpanValue?, List<KademliaNode>) FindValue(ReadOnlySpan<byte> key)
     {
         var nodes = new List<KademliaNode>();
-        if (!_client!.TrySend($"FIND_VALUE {Encoding.UTF8.GetString(key)} {_nonceProvider.Next()}"))
+        if (!_client!.TrySend($"{Messages.FindValue} {_options.Encoding.GetString(key)} {_options.NonceProvider.Next()}"))
             return (SpanValue.Empty, nodes);
 
         var response = GetResponse(_client);
         if (!string.IsNullOrWhiteSpace(response))
         {
-            var payload = Encoding.UTF8.GetBytes(response).AsSpan();
+            var payload = _options.Encoding.GetBytes(response).AsSpan();
             return (payload.AsSpanValue(), nodes);
         }
 
