@@ -4,16 +4,29 @@ namespace ownable.tests.dht
 {
     public class ClientServerTests
     {
-        [Fact]
-        public void SendAndReceive()
+        [Theory]
+        [InlineData("Hello, World!")]
+        public void SendAndReceive(string message)
         {
-            var client = new SocketClient("localhost", 9999);
-            var server = new SocketServer(9999);
+            var scanner = new PortScanner();
+            var port = scanner.GetNextAvailablePort();
+
+            var client = new SocketClient("localhost", port);
+            var server = new SocketServer(port);
             
-            const string sent = "Hello, World";
-            client.Send(sent);
-            var received = server.Receive();
-            Assert.Equal(sent, received);
+            AssertRequestResponse(message, client, server);
+            AssertRequestResponse(message, client, server);
+        }
+
+        private static void AssertRequestResponse(string message, SocketClient client, SocketServer server)
+        {
+            Assert.True(client.TrySend(message));
+            Assert.True(server.TryReceive(out var request));
+            Assert.Equal(message, request);
+
+            Assert.True(server.TrySend(message));
+            Assert.True(client.TryReceive(out var response));
+            Assert.Equal(message, response);
         }
     }
 }
